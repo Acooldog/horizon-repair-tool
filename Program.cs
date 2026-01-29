@@ -16,6 +16,10 @@ namespace test
             Logs.LogInfo("程序启动");
             string logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
             Logs.LogInfo(logDir);
+
+            // 检查管理员权限
+            check_admin();
+
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
@@ -38,7 +42,7 @@ namespace test
 
         static void check_admin()
         {
-            bool Yon = ServiceManager.CheckAdministratorPrivileges();
+            bool Yon = ServiceManager.CheckAdministratorPrivilegesAsync();
             if (!Yon)
             {
                 MessageBox.Show("请以管理员身份运行本程序！", "警告", MessageBoxButtons.OK, MessageBoxIcon.Error);

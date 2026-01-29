@@ -1,25 +1,39 @@
 {
   "icon": "img/ke.ico",
-  "debug": {
-    "yon": true,
-    "path": "O:\\A_CS\\test\\test"
-  },
-  "disableClashName": [
-    "NI Application Web Server",
-    "NI System Web Server",
-    "NI Authentication Service",
-    "NI Citadel 4 Service",
-    "NI Variable Engine",
-    "NI Device Loader",
-    "NI Configuration Manager",
-    "NI Domain Service",
-    "NI Network Discovery",
-    "NI mDNS Responder Service",
-    "NI Time Synchronization",
-    "NI PSP Service Locator",
-    "NI PXI Resource Manager",
-    "NI Service Locator",
-    "NI System Web Server",
-    "shpamsvc"
-  ]
+  // 修复
+  "fix": {
+    // 禁用的服务名称
+    "disableClashName": [
+      "NI Application Web Server",
+      "NI System Web Server",
+      "NI Authentication Service",
+      "NI Citadel 4 Service",
+      "NI Variable Engine",
+      "NI Device Loader",
+      "NI Configuration Manager",
+      "NI Domain Service",
+      "NI Network Discovery",
+      "NI mDNS Responder Service",
+      "NI Time Synchronization",
+      "NI PSP Service Locator",
+      "NI PXI Resource Manager",
+      "NI Service Locator",
+      "NI System Web Server",
+      "shpamsvc"
+    ],
+    // 需要启用并设置为手动的服务名称
+    "EnableNotAuto": [
+      "IP Helper",
+      "Xbox Live 游戏保存"
+    ],
+    // 需要启用并设置为自动的服务名称
+    "EnableAuto": [
+      "IKE and AuthIP IPsec Keying Modules",
+      "TCP/IP NetBIOS Helper",
+      "Xbox Accessory Management Service",
+      "Xbox Live 身份验证管理器",
+      "Xbox Live 网络服务",
+      "Peer Networking Grouping"
+    ]
+  }
 }

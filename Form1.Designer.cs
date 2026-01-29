@@ -69,6 +69,6 @@ namespace test
         #endregion
 
         private Button button1;
-        private Button disableService;
+        public Button disableService;
     }
 }
