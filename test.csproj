@@ -13,12 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="bin\Debug\net8.0-windows\img\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="bin\Debug\net8.0-windows\img\ke.ico" />
-    <None Include="bin\Debug\net8.0-windows\plugins\plugins.json" />
+    <Folder Include="bin\Debug\net8.0-windows\" />
+    <Folder Include="img\" />
   </ItemGroup>
 
 </Project>

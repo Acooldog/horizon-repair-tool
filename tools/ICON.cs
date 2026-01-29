@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using test.tools;
 
 namespace test.tools
 {
@@ -19,14 +20,15 @@ namespace test.tools
             {
                 // 获取icon
                 dynamic ICON = GetIcon();
-                // 获取icon路径
-                string icon_path = ICON.icon;
+                string icon_name = ICON.icon;
+                // 获取icon路径 将自身路径与icon路径进行拼接
+                string icon_path = Path.Combine(pathEdit.GetApplicationRootDirectory(), icon_name);
                 // 使用icon
                 IconCon.UseIcon(icon_path, that);
             }
             catch (Exception ex)
             {
-                Logs.LogError("ICON.cs", ex);
+                Logs.LogError("查找icon出现错误: ", ex);
             }
             finally
             {
@@ -42,7 +44,8 @@ namespace test.tools
         {
             // 相对路径读取
             string relativePath = "plugins/plugins.json";
-            string fullPath = Path.Combine(Application.StartupPath, relativePath);
+            Logs.LogInfo($"当前程序运行路径: {pathEdit.GetApplicationRootDirectory()}");
+            string fullPath = Path.Combine(pathEdit.GetApplicationRootDirectory(), relativePath);
             return JsonEdit.ReadJsonFile(fullPath);
         }
 
@@ -62,6 +65,7 @@ namespace test.tools
             else
             {
                 that.Icon = SystemIcons.Application;
+                throw new Exception($"没有在 {icon_path} 找到相关icon");
             }
         }
     }
