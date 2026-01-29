@@ -1,7 +1,9 @@
-﻿namespace test
+﻿
+namespace test
 {
     partial class Form1
-    {
+    {   
+
         /// <summary>
         ///  Required designer variable.
         /// </summary>
@@ -49,7 +51,7 @@
             Controls.Add(button1);
             Name = "Form1";
             Text = "Form1";
-            Load += Form1_Load;
+            //Load += Form1_Load;
             ResumeLayout(false);
         }
 

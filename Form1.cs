@@ -1,3 +1,6 @@
+using test.tools;
+
+
 namespace test
 {
     public partial class Form1 : Form
@@ -5,6 +8,7 @@ namespace test
         public Form1()
         {
             InitializeComponent();
+            Form1_Load();
         }
 
         private void folderBrowserDialog1_HelpRequest(object sender, EventArgs e)
@@ -18,9 +22,11 @@ namespace test
             dlog.ShowDialog();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void Form1_Load()
         {
-
+            new IconCon(this);
         }
     }
+
+    
 }
