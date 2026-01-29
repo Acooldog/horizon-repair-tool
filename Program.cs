@@ -35,5 +35,15 @@ namespace test
                 Logs.LogInfo("程序退出");
             }
         }
+
+        static void check_admin()
+        {
+            bool Yon = ServiceManager.CheckAdministratorPrivileges();
+            if (!Yon)
+            {
+                MessageBox.Show("请以管理员身份运行本程序！", "警告", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Application.Exit();
+            }
+        }
     }
 }

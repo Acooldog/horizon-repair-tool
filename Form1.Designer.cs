@@ -31,11 +31,12 @@ namespace test
         private void InitializeComponent()
         {
             button1 = new Button();
+            disableService = new Button();
             SuspendLayout();
             // 
             // button1
             // 
-            button1.Location = new Point(299, 197);
+            button1.Location = new Point(271, 146);
             button1.Name = "button1";
             button1.Size = new Size(75, 23);
             button1.TabIndex = 0;
@@ -43,20 +44,31 @@ namespace test
             button1.UseVisualStyleBackColor = true;
             button1.Click += click_test;
             // 
+            // disableService
+            // 
+            disableService.Location = new Point(277, 76);
+            disableService.Name = "disableService";
+            disableService.Size = new Size(106, 23);
+            disableService.TabIndex = 1;
+            disableService.Text = "禁用冲突服务";
+            disableService.UseVisualStyleBackColor = true;
+            disableService.Click += disableService_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(674, 416);
+            Controls.Add(disableService);
             Controls.Add(button1);
             Name = "Form1";
             Text = "Form1";
-            //Load += Form1_Load;
             ResumeLayout(false);
         }
 
         #endregion
 
         private Button button1;
+        private Button disableService;
     }
 }

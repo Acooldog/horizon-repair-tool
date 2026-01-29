@@ -3,5 +3,23 @@
   "debug": {
     "yon": true,
     "path": "O:\\A_CS\\test\\test"
-  }
+  },
+  "disableClashName": [
+    "NI Application Web Server",
+    "NI System Web Server",
+    "NI Authentication Service",
+    "NI Citadel 4 Service",
+    "NI Variable Engine",
+    "NI Device Loader",
+    "NI Configuration Manager",
+    "NI Domain Service",
+    "NI Network Discovery",
+    "NI mDNS Responder Service",
+    "NI Time Synchronization",
+    "NI PSP Service Locator",
+    "NI PXI Resource Manager",
+    "NI Service Locator",
+    "NI System Web Server",
+    "shpamsvc"
+  ]
 }
