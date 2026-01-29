@@ -6,17 +6,17 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.IO;
-using test.tools;
+using test.src.Services.Helpers;
 
-namespace test.tools
+namespace test.src.Services.Managers
 {
     public class JsonEdit
-    {   
+    {
         // 1. 读取JSON文件
         public static JObject ReadJsonFile(string filePath)
-        {   
+        {
             if (!File.Exists(filePath))
-            {   
+            {
                 Logs.LogWarning($"文件不存在: {filePath}");
                 // 如果文件不存在，创建空JSON对象
                 return new JObject();

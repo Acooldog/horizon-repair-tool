@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace test.tools
+namespace test.src.Services.Helpers
 {
     public class Logs
     {

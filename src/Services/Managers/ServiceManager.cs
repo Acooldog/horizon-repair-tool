@@ -5,8 +5,9 @@ using System.ServiceProcess;
 using System.Management;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using test.src.Services.Helpers;
 
-namespace test.tools
+namespace test.src.Services.Managers
 {
     public class ServiceManager
     {

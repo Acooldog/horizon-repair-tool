@@ -5,9 +5,9 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using test.tools;
+using test.src.Services.Helpers;
 
-namespace test.tools
+namespace test.src.Services.Managers
 {
     /// <summary>
     /// FORM的icon的操作
@@ -24,7 +24,7 @@ namespace test.tools
                 // 获取icon路径 将自身路径与icon路径进行拼接
                 string icon_path = Path.Combine(pathEdit.GetApplicationRootDirectory(), icon_name);
                 // 使用icon
-                IconCon.UseIcon(icon_path, that);
+                UseIcon(icon_path, that);
             }
             catch (Exception ex)
             {

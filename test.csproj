@@ -17,6 +17,8 @@
   <ItemGroup>
     <Folder Include="bin\Debug\net8.0-windows\" />
     <Folder Include="img\" />
+    <Folder Include="src\UI\Controls\" />
+    <Folder Include="src\UI\Dialogs\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
+using test.src.Services.Helpers;
 
-namespace test.tools
+namespace test.src.Services.Managers
 {
     /// <summary>
     /// 修复程序
