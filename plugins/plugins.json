@@ -18,8 +18,7 @@
       "NI PSP Service Locator",
       "NI PXI Resource Manager",
       "NI Service Locator",
-      "NI System Web Server",
-      "shpamsvc"
+      "NI System Web Server"
     ],
     // 需要启用并设置为手动的服务名称
     "EnableNotAuto": [

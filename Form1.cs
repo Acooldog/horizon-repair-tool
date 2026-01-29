@@ -8,6 +8,7 @@ namespace test
         public Form1()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;  // 固定对话框，不可调整大小
             Form1_Load();
         }
 
@@ -16,10 +17,52 @@ namespace test
 
         }
 
-        private void click_test(object sender, EventArgs e)
+        /// <summary>
+        /// 启用必要服务
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void ClickEnableService(object sender, EventArgs e)
         {
-            Form2 dlog = new Form2();
-            dlog.ShowDialog();
+            int completeCount = 0;
+            this.EnableService.Enabled = false;
+
+            // 启用手动服务
+            await fixSoft.ChangeWinService("EnableNotAuto", false, (isSuccess, result) =>
+            {
+                if (isSuccess)
+                {
+                    MessageBox.Show(result, "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    completeCount++;
+                }
+                else
+                {
+                    MessageBox.Show("错误，请确保你并没有篡改任何文件，并把logs文件夹发送给开发者！", "警告",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    completeCount++;
+                }
+            });
+
+            // 启用自动服务
+            await fixSoft.ChangeWinService("EnableAuto", true, (isSuccess, result) =>
+            {
+                if (isSuccess)
+                {
+                    MessageBox.Show(result, "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    completeCount++;
+                }
+                else
+                {
+                    MessageBox.Show("错误，请确保你并没有篡改任何文件，并把logs文件夹发送给开发者！", "警告",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    completeCount++;
+                }
+            });
+
+            if (completeCount == 2)
+            {
+                this.EnableService.Enabled = true;
+            }
         }
 
         private void Form1_Load()
@@ -34,72 +77,26 @@ namespace test
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void disableService_Click(object sender, EventArgs e)
-        {      
-            this.disableService.Enabled = false;
-            fixSoft.test(this, "disableClashName");
-        }
-    }
-
-    /// <summary>
-    /// 修复程序
-    /// </summary>
-    public class fixSoft 
-    { 
-        public fixSoft()
+        private async void disableService_Click(object sender, EventArgs e)
         {
-
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="fucName">功能名，如disableClashName</param>
-        /// <param name="that">父类</param>
-        public static async void test(Form1 that, string fucName= "")
-        {   
-            // 如果用户没有设置功能名
-            if (fucName.Length == 0)
+            this.disableService.Enabled = false;
+            await fixSoft.ChangeWinService("disableClashName", (isSuccess, result) =>
             {
-                Logs.LogWarning("请选择功能名!!!");
-                return;
-            }
-            // 拼接json路径
-            string jsonPath = pathEdit.GetApplicationRootDirectory() + "\\plugins\\plugins.json";
-            // 读取json文件
-            JObject ServiceNameList = JsonEdit.ReadJsonFile(jsonPath);
-            dynamic ServiceName = ServiceNameList;
-            // 获取数组并转换
-            JArray? jArray = ServiceName.fix[fucName] as JArray;
-            if (jArray != null)
-            {
-                List<string> serviceList = new List<string>();
-                foreach (var item in jArray)
+                if (isSuccess)
                 {
-                    serviceList.Add(item.ToString());
-                }
-
-                string[] serviceName = serviceList.ToArray();
-                Logs.LogInfo($"冲突的服务列表：{string.Join(", ", serviceName)}");
-                string result = await ServiceManager.DisableServicesAsync(serviceName);
-                // 判断输出结果，None为"服务名数组为空，没有服务需要禁用"
-                if (result != "None")
-                {
-                    MessageBox.Show(result, "完成", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
-                    that.disableService.Enabled = true;
+                    MessageBox.Show(result, "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.disableService.Enabled = true;
                 }
                 else
                 {
                     MessageBox.Show("错误，请确保你并没有篡改任何文件，并把logs文件夹发送给开发者！", "警告",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    that.disableService.Enabled = true;
-
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    this.disableService.Enabled = true;
                 }
-
-            }
+            });
         }
     }
-
-
 }
+
+    
 

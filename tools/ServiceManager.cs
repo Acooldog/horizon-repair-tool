@@ -11,11 +11,93 @@ namespace test.tools
     public class ServiceManager
     {
         /// <summary>
+        /// 通过显示名称获取服务名称
+        /// </summary>
+        /// <param name="displayName">服务显示名称</param>
+        /// <returns>服务名称，如果未找到则返回null</returns>
+        public static async Task<string?> GetServiceNameByDisplayNameAsync(string displayName)
+        {
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                Logs.LogWarning("显示名称为空");
+                return null;
+            }
+
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    Logs.LogInfo($"正在通过显示名称查询服务: '{displayName}'");
+
+                    using (var searcher = new ManagementObjectSearcher(
+                        $"SELECT Name FROM Win32_Service WHERE DisplayName = '{displayName.Replace("'", "''")}'"))
+                    {
+                        foreach (ManagementObject service in searcher.Get())
+                        {
+                            string serviceName = service["Name"]?.ToString() ?? "";
+                            if (!string.IsNullOrEmpty(serviceName))
+                            {
+                                Logs.LogInfo($"找到服务: 显示名称='{displayName}', 服务名称='{serviceName}'");
+                                return serviceName;
+                            }
+                        }
+
+                        // 如果WMI查询失败，回退到通过ServiceController查询
+                        Logs.LogWarning($"WMI未找到服务，尝试通过ServiceController查询: '{displayName}'");
+                        return GetServiceNameByDisplayNameFallback(displayName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logs.LogError($"通过显示名称查询服务失败: '{displayName}'", ex);
+
+                    // 回退到通过ServiceController查询
+                    try
+                    {
+                        return GetServiceNameByDisplayNameFallback(displayName);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// 回退方法：通过ServiceController查询服务名称
+        /// </summary>
+        private static string? GetServiceNameByDisplayNameFallback(string displayName)
+        {
+            try
+            {
+                ServiceController[] services = ServiceController.GetServices();
+                foreach (var service in services)
+                {
+                    if (service.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Logs.LogInfo($"回退方法找到服务: 显示名称='{displayName}', 服务名称='{service.ServiceName}'");
+                        return service.ServiceName;
+                    }
+                }
+
+                Logs.LogWarning($"未找到显示名称为 '{displayName}' 的服务");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logs.LogError($"回退方法查询服务失败: '{displayName}'", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
         /// 禁用指定的 Windows 服务
         /// </summary>
-        /// <param name="serviceNames">要禁用的服务名称数组</param>
+        /// <param name="serviceNames">要禁用的服务名称或显示名称数组</param>
+        /// <param name="useDisplayName">true=使用显示名称进行操作, false=使用服务名称进行操作</param>
         /// <returns>禁用结果</returns>
-        public static async Task<string> DisableServicesAsync(string[] serviceNames)
+        public static async Task<string> DisableServicesAsync(string[] serviceNames, bool useDisplayName = false)
         {
             if (serviceNames == null || serviceNames.Length == 0)
             {
@@ -23,36 +105,70 @@ namespace test.tools
                 return "None";
             }
 
-            Logs.LogInfo($"开始禁用服务，共 {serviceNames.Length} 个服务");
+            string operationType = useDisplayName ? "显示名称" : "服务名称";
+            Logs.LogInfo($"开始禁用服务，共 {serviceNames.Length} 个服务，操作类型: {operationType}");
             Logs.LogInfo($"服务列表: {string.Join(", ", serviceNames)}");
 
             int successCount = 0;
             int failedCount = 0;
             int notExistCount = 0;
+            int nameResolveFailedCount = 0;
 
-            foreach (string serviceName in serviceNames)
+            foreach (string name in serviceNames)
             {
                 try
                 {
-                    await DisableSingleServiceAsync(serviceName);
+                    string actualServiceName = name;
+
+                    // 如果需要使用显示名称，先转换为服务名称
+                    if (useDisplayName)
+                    {
+                        Logs.LogInfo($"正在将显示名称 '{name}' 转换为服务名称...");
+                        string? resolvedName = await GetServiceNameByDisplayNameAsync(name);
+
+                        if (string.IsNullOrEmpty(resolvedName))
+                        {
+                            Logs.LogError($"无法找到显示名称为 '{name}' 的服务");
+                            nameResolveFailedCount++;
+                            continue;
+                        }
+
+                        actualServiceName = resolvedName;
+                        Logs.LogInfo($"显示名称 '{name}' 对应的服务名称为: {actualServiceName}");
+                    }
+
+                    await DisableSingleServiceAsync(actualServiceName);
                     successCount++;
                 }
                 catch (InvalidProgramException)
                 {
-                    Logs.LogWarning($"服务 '{serviceName}' 不存在，跳过");
+                    Logs.LogWarning($"服务 '{name}' 不存在，跳过");
                     notExistCount++;
                 }
-                catch (InvalidOperationException)
+                catch (InvalidOperationException ex)
                 {
-                    Logs.LogError($"禁用服务 '{serviceName}' 失败");
+                    if (useDisplayName && ex.Message.Contains("无法找到显示名称"))
+                    {
+                        nameResolveFailedCount++;
+                    }
+                    else
+                    {
+                        Logs.LogError($"禁用服务 '{name}' 失败: {ex.Message}");
+                        failedCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logs.LogError($"禁用服务 '{name}' 时发生未知错误: {ex.Message}");
                     failedCount++;
                 }
             }
 
-            string result = $"服务禁用完成。成功: {successCount} 个, " +
-                           $"失败: {failedCount} 个, " +
-                           $"不存在: {notExistCount} 个," +
-                           $"总计: {successCount + failedCount + notExistCount}";
+            string result = $"服务禁用完成。成功: {successCount} 个," +
+                          $"失败: {failedCount} 个," +
+                          $"不存在: {nameResolveFailedCount} 个," +
+                          $"名称解析失败: {nameResolveFailedCount} 个," +
+                          $"总计: {successCount + failedCount + notExistCount + nameResolveFailedCount} 个";
 
             Logs.LogInfo(result);
             return result;
@@ -61,10 +177,11 @@ namespace test.tools
         /// <summary>
         /// 启用指定的 Windows 服务
         /// </summary>
-        /// <param name="serviceNames">要启用的服务名称数组</param>
+        /// <param name="serviceNames">要启用的服务名称或显示名称数组</param>
         /// <param name="autoStart">true=自动启动, false=手动启动</param>
+        /// <param name="useDisplayName">true=使用显示名称进行操作, false=使用服务名称进行操作</param>
         /// <returns>启用结果</returns>
-        public static async Task<string> EnableServicesAsync(string[] serviceNames, bool autoStart)
+        public static async Task<string> EnableServicesAsync(string[] serviceNames, bool autoStart, bool useDisplayName = false)
         {
             if (serviceNames == null || serviceNames.Length == 0)
             {
@@ -73,42 +190,98 @@ namespace test.tools
             }
 
             string startType = autoStart ? "自动启动" : "手动启动";
-            Logs.LogInfo($"开始启用服务，共 {serviceNames.Length} 个服务，启动类型: {startType}");
+            string operationType = useDisplayName ? "显示名称" : "服务名称";
+            Logs.LogInfo($"开始启用服务，共 {serviceNames.Length} 个服务，启动类型: {startType}，操作类型: {operationType}");
             Logs.LogInfo($"服务列表: {string.Join(", ", serviceNames)}");
 
             int successCount = 0;
             int failedCount = 0;
             int notExistCount = 0;
+            int nameResolveFailedCount = 0;
 
-            foreach (string serviceName in serviceNames)
+            foreach (string name in serviceNames)
             {
                 try
                 {
-                    await EnableSingleServiceAsync(serviceName, autoStart);
+                    string actualServiceName = name;
+
+                    // 如果需要使用显示名称，先转换为服务名称
+                    if (useDisplayName)
+                    {
+                        Logs.LogInfo($"正在将显示名称 '{name}' 转换为服务名称...");
+                        string? resolvedName = await GetServiceNameByDisplayNameAsync(name);
+
+                        if (string.IsNullOrEmpty(resolvedName))
+                        {
+                            Logs.LogError($"无法找到显示名称为 '{name}' 的服务");
+                            nameResolveFailedCount++;
+                            continue;
+                        }
+
+                        actualServiceName = resolvedName;
+                        Logs.LogInfo($"显示名称 '{name}' 对应的服务名称为: {actualServiceName}");
+                    }
+
+                    await EnableSingleServiceAsync(actualServiceName, autoStart);
                     successCount++;
                 }
                 catch (InvalidProgramException)
                 {
-                    Logs.LogWarning($"服务 '{serviceName}' 不存在，跳过");
+                    Logs.LogWarning($"服务 '{name}' 不存在，跳过");
                     notExistCount++;
                 }
-                catch (InvalidOperationException)
+                catch (InvalidOperationException ex)
                 {
-                    Logs.LogError($"启用服务 '{serviceName}' 失败");
+                    if (useDisplayName && ex.Message.Contains("无法找到显示名称"))
+                    {
+                        nameResolveFailedCount++;
+                    }
+                    else
+                    {
+                        Logs.LogError($"启用服务 '{name}' 失败: {ex.Message}");
+                        failedCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logs.LogError($"启用服务 '{name}' 时发生未知错误: {ex.Message}");
                     failedCount++;
                 }
             }
 
-            string result = $"服务启用完成。成功: {successCount} 个, " +
-                           $"失败: {failedCount} 个, " +
-                           $"不存在: {notExistCount} 个," +
-                           $"总计: {successCount + failedCount + notExistCount}，" +
-                           $"启动类型: {startType}";
+            string result = $"服务启用完成。成功: {successCount} 个," +
+                          $"失败: {failedCount} 个, " +
+                          $"不存在: {nameResolveFailedCount} 个," +
+                          $"名称解析失败: {nameResolveFailedCount} 个," +
+                          $"总计: {successCount + failedCount + notExistCount + nameResolveFailedCount} 个," +
+                          $"启动类型: {startType}";
 
             Logs.LogInfo(result);
             return result;
         }
 
+        /// <summary>
+        /// 重载方法：禁用指定的 Windows 服务（保持向后兼容）
+        /// </summary>
+        /// <param name="serviceNames">要禁用的服务名称数组</param>
+        /// <returns>禁用结果</returns>
+        public static async Task<string> DisableServicesAsync(string[] serviceNames)
+        {
+            return await DisableServicesAsync(serviceNames, false);
+        }
+
+        /// <summary>
+        /// 重载方法：启用指定的 Windows 服务（保持向后兼容）
+        /// </summary>
+        /// <param name="serviceNames">要启用的服务名称数组</param>
+        /// <param name="autoStart">true=自动启动, false=手动启动</param>
+        /// <returns>启用结果</returns>
+        public static async Task<string> EnableServicesAsync(string[] serviceNames, bool autoStart)
+        {
+            return await EnableServicesAsync(serviceNames, autoStart, false);
+        }
+
+        // 以下是原有的方法，保持不变
         /// <summary>
         /// 禁用单个 Windows 服务
         /// </summary>
@@ -239,30 +412,6 @@ namespace test.tools
                 string currentStartType = newStatus.StartType ?? "未知";
                 throw new InvalidOperationException($"服务 '{serviceName}' 设置启用失败，当前启动类型: {currentStartType}");
             }
-        }
-
-        /// <summary>
-        /// 验证服务名是否合法，防止命令注入
-        /// </summary>
-        private static bool IsValidServiceName(string serviceName)
-        {
-            if (string.IsNullOrEmpty(serviceName))
-                return false;
-
-            // 服务名通常只包含字母、数字、连字符和下划线
-            foreach (char c in serviceName)
-            {
-                if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.'))
-                {
-                    return false;
-                }
-            }
-
-            // 长度限制
-            if (serviceName.Length > 256)
-                return false;
-
-            return true;
         }
 
         /// <summary>
@@ -510,7 +659,7 @@ namespace test.tools
         }
 
         /// <summary>
-        /// 设置服务启动类型
+        /// 设置服务启动类型（智能选择 WMI 或 sc）
         /// </summary>
         /// <param name="serviceName">服务名</param>
         /// <param name="startType">启动类型: disabled, manual, auto</param>
@@ -518,61 +667,34 @@ namespace test.tools
         {
             Logs.LogInfo($"设置服务 '{serviceName}' 启动类型为: {startType}");
 
-            await Task.Run(() =>
+            try
             {
+                // 首选使用 WMI
+                await SetServiceStartTypeByWMIAsync(serviceName, startType);
+            }
+            catch (Exception wmiEx)
+            {
+                Logs.LogWarning($"WMI 设置失败，尝试 sc 命令: {wmiEx.Message}");
+
                 try
                 {
-                    // 使用 sc config 命令设置启动类型
-                    string scStartType = "";
-                    switch (startType.ToLower())
-                    {
-                        case "disabled":
-                            scStartType = "disabled";
-                            break;
-                        case "manual":
-                            scStartType = "demand";
-                            break;
-                        case "auto":
-                            scStartType = "auto";
-                            break;
-                        default:
-                            throw new ArgumentException($"不支持的启动类型: {startType}");
-                    }
-
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = "sc",
-                        Arguments = $"config \"{serviceName}\" start= {scStartType}",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-
-                    using (var process = Process.Start(psi))
-                    {
-                        if (process == null)  // 空值检查
-                        {
-                            throw new InvalidOperationException($"无法启动进程来设置服务启动类型: {serviceName}");
-                        }
-
-                        process.WaitForExit();
-                        string output = process.StandardOutput.ReadToEnd();
-                        string error = process.StandardError.ReadToEnd();
-
-                        if (process.ExitCode != 0)
-                        {
-                            throw new InvalidOperationException($"设置启动类型失败: {error}");
-                        }
-
-                        Logs.LogInfo($"服务 '{serviceName}' 启动类型已设置为 {startType}");
-                    }
+                    // 回退到 sc 命令
+                    await Task.Run(() => FallbackToSCCommand(serviceName, startType));
                 }
-                catch (Exception ex)
+                catch (Exception scEx)
                 {
-                    throw new InvalidOperationException($"设置服务 '{serviceName}' 启动类型失败", ex);
+                    // 记录详细的错误信息
+                    Logs.LogError($"所有设置方法都失败", scEx);
+
+                    // 抛出合并的异常信息
+                    throw new InvalidOperationException(
+                        $"无法设置服务 '{serviceName}' 的启动类型\n" +
+                        $"WMI 错误: {wmiEx.Message}\n" +
+                        $"SC 错误: {scEx.Message}",
+                        scEx
+                    );
                 }
-            });
+            }
         }
 
         /// <summary>
@@ -701,6 +823,196 @@ namespace test.tools
             public string? Description { get; set; }
             public bool CanStop { get; set; }
             public bool CanPauseAndContinue { get; set; }
+        }
+
+        /// <summary>
+        /// 使用 WMI 设置服务启动类型
+        /// </summary>
+        /// <param name="serviceName">服务名</param>
+        /// <param name="startType">启动类型: disabled, manual, auto</param>
+        private static async Task SetServiceStartTypeByWMIAsync(string serviceName, string startType)
+        {
+            Logs.LogInfo($"使用WMI设置服务 '{serviceName}' 启动类型为: {startType}");
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    // 将用户友好的类型转换为 WMI 类型
+                    string wmiStartType = ConvertToWMIStartType(startType);
+
+                    // 创建 WMI 查询
+                    using (var searcher = new ManagementObjectSearcher(
+                        $"SELECT * FROM Win32_Service WHERE Name = '{serviceName}'"))
+                    {
+                        var services = searcher.Get();
+
+                        if (services.Count == 0)
+                        {
+                            throw new InvalidOperationException($"找不到服务: {serviceName}");
+                        }
+
+                        foreach (ManagementObject service in services)
+                        {
+                            try
+                            {
+                                // 获取当前启动类型
+                                string currentStartMode = service["StartMode"]?.ToString() ?? "未知";
+                                Logs.LogInfo($"服务 '{serviceName}' 当前启动类型: {currentStartMode}");
+
+                                // 如果需要修改
+                                if (string.Equals(currentStartMode, wmiStartType, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    Logs.LogInfo($"服务 '{serviceName}' 已经是 {startType} 模式，无需修改");
+                                    return;
+                                }
+
+                                // 修改启动类型
+                                // 注意：WMI 的 ChangeStartMode 方法在某些情况下可能不可用
+                                // 所以我们使用 ManagementObject 的 InvokeMethod
+                                var inParams = service.GetMethodParameters("Change");
+                                inParams["StartMode"] = wmiStartType;
+
+                                var result = service.InvokeMethod("Change", inParams, null);
+
+                                // 检查返回结果
+                                uint returnValue = (uint)result["ReturnValue"];
+
+                                if (returnValue == 0)
+                                {
+                                    Logs.LogInfo($"服务 '{serviceName}' 启动类型已成功设置为 {startType} (WMI)");
+                                }
+                                else
+                                {
+                                    string errorMsg = GetWMIErrorMessage(returnValue);
+                                    throw new InvalidOperationException($"WMI设置失败 (错误码: {returnValue}): {errorMsg}");
+                                }
+                            }
+                            finally
+                            {
+                                service.Dispose();
+                            }
+                        }
+                    }
+                }
+                catch (ManagementException ex)
+                {
+                    Logs.LogError($"WMI操作失败: {ex.Message}", ex);
+                    // 回退到 sc 命令
+                    FallbackToSCCommand(serviceName, startType);
+                }
+                catch (Exception ex)
+                {
+                    Logs.LogError($"设置服务 '{serviceName}' 启动类型失败", ex);
+                    throw new InvalidOperationException($"设置服务 '{serviceName}' 启动类型失败", ex);
+                }
+            });
+        }
+
+        /// <summary>
+        /// 将用户友好的启动类型转换为 WMI 类型
+        /// </summary>
+        private static string ConvertToWMIStartType(string userStartType)
+        {
+            return userStartType.ToLower() switch
+            {
+                "disabled" => "Disabled",
+                "manual" => "Manual",
+                "auto" => "Automatic",
+                "automatic" => "Automatic",  // 额外支持
+                "demand" => "Manual",        // sc 的 manual 对应 WMI 的 Manual
+                _ => throw new ArgumentException($"不支持的启动类型: {userStartType}")
+            };
+        }
+
+        /// <summary>
+        /// 获取 WMI 错误消息
+        /// </summary>
+        private static string GetWMIErrorMessage(uint errorCode)
+        {
+            return errorCode switch
+            {
+                0 => "成功",
+                1 => "不支持",
+                2 => "访问被拒绝",
+                3 => "依赖服务正在运行",
+                4 => "无效的服务控制",
+                5 => "服务无法接受控制",
+                6 => "服务未运行",
+                7 => "服务超时",
+                8 => "未知错误",
+                9 => "路径未找到",
+                10 => "服务已运行",
+                11 => "服务数据库被锁定",
+                12 => "服务依赖被删除",
+                13 => "服务依赖无效",
+                14 => "服务已禁用",
+                15 => "服务登录失败",
+                16 => "服务被标记为删除",
+                17 => "服务无线程",
+                18 => "状态循环依赖",
+                19 => "状态重复名称",
+                20 => "状态无效名称",
+                21 => "状态无效参数",
+                22 => "状态服务不存在",
+                23 => "服务已存在",
+                24 => "已暂停",
+                _ => $"未知错误代码: {errorCode}"
+            };
+        }
+
+        /// <summary>
+        /// 回退到 sc 命令
+        /// </summary>
+        private static void FallbackToSCCommand(string serviceName, string startType)
+        {
+            Logs.LogInfo($"回退到 sc 命令设置服务 '{serviceName}' 启动类型");
+
+            try
+            {
+                // 使用 sc config 命令
+                string scStartType = startType.ToLower() switch
+                {
+                    "disabled" => "disabled",
+                    "manual" => "demand",
+                    "auto" => "auto",
+                    _ => throw new ArgumentException($"不支持的启动类型: {startType}")
+                };
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "sc",
+                    Arguments = $"config \"{serviceName}\" start= {scStartType}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (var process = Process.Start(psi))
+                {
+                    if (process == null)
+                    {
+                        throw new InvalidOperationException($"无法启动进程");
+                    }
+
+                    process.WaitForExit();
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+
+                    if (process.ExitCode != 0)
+                    {
+                        throw new InvalidOperationException($"sc命令失败: {error}");
+                    }
+
+                    Logs.LogInfo($"sc命令成功设置服务启动类型");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.LogError($"回退到 sc 命令也失败: {ex.Message}", ex);
+                throw;
+            }
         }
     }
 }
