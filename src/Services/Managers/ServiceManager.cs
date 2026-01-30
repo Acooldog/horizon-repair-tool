@@ -3,13 +3,15 @@ using System.ServiceProcess;
 using System.Management;
 using test.src.Services.Helpers;
 using System.Text;
+using test.src.Services.Model;
 
 using EnumerationOptions = System.Management.EnumerationOptions; // 明确使用Management命名空间的EnumerationOptions
 
 namespace test.src.Services.Managers
-{
+{   
     public class ServiceManager
     {
+        
         /// <summary>
         /// 通过显示名称获取服务名称（使用WMI查询）
         /// </summary>
@@ -116,6 +118,7 @@ namespace test.src.Services.Managers
             }
         }
 
+
         /// <summary>
         /// 禁用指定的 Windows 服务
         /// </summary>
@@ -124,6 +127,9 @@ namespace test.src.Services.Managers
         /// <returns>禁用结果</returns>
         public static async Task<string> DisableServicesAsync(string[] serviceNames, bool useDisplayName = false)
         {
+            // 禁用进度条数据模型初始化
+            UnEnableProgressM UnEnableProgress = new();
+
             if (serviceNames == null || serviceNames.Length == 0)
             {
                 Logs.LogWarning("服务名数组为空，没有服务需要禁用");
@@ -138,6 +144,11 @@ namespace test.src.Services.Managers
             int failedCount = 0;
             int notExistCount = 0;
             int nameResolveFailedCount = 0;
+            // 赋值给数据模型
+            UnEnableProgress.successCount = successCount;
+            UnEnableProgress.failedCount = failedCount;
+            UnEnableProgress.notExistCount = notExistCount;
+            UnEnableProgress.nameResolveFailedCount = nameResolveFailedCount;
 
             foreach (string name in serviceNames)
             {
@@ -187,6 +198,14 @@ namespace test.src.Services.Managers
                     Logs.LogError($"禁用服务 '{name}' 时发生未知错误: {ex.Message}");
                     failedCount++;
                 }
+                finally
+                {
+                    // 判断哪个值变了 就用Logs输出变量名以及当前值和原来值，最后赋值给数据模型
+                    JudgeServiceStatus("successCount", UnEnableProgress.successCount, successCount);
+                    JudgeServiceStatus("failedCount", UnEnableProgress.failedCount, failedCount);
+                    JudgeServiceStatus("notExistCount", UnEnableProgress.notExistCount, notExistCount);
+                    JudgeServiceStatus("nameResolveFailedCount", UnEnableProgress.nameResolveFailedCount, nameResolveFailedCount);
+                }
             }
 
             string result = $"服务禁用完成。成功: {successCount} 个," +
@@ -197,6 +216,18 @@ namespace test.src.Services.Managers
 
             Logs.LogInfo(result);
             return result;
+        }
+
+        private static void JudgeServiceStatus(string Name, int oldNum, int newNum)
+        {
+            if (newNum != oldNum)
+            {
+                Logs.LogInfo($"{Name} 原来: {oldNum}," +
+                    $"现在: {newNum}," +
+                    $"发生变化!");
+
+                oldNum = newNum;
+            }
         }
 
         /// <summary>
@@ -1143,6 +1174,31 @@ namespace test.src.Services.Managers
                 Logs.LogError($"回退到 sc 命令也失败: {ex.Message}", ex);
                 throw;
             }
+        }
+    }
+
+
+    public class ServiceP
+    {
+        public static void test(
+            Action<int, string>? worker = null
+            )
+        {
+
+
+            // 模拟一个耗时任务
+            for (int i = 0; i <= 100; i++)
+            {
+                // 模拟工作
+                Thread.Sleep(50);
+
+                // 报告进度
+                worker?.Invoke(
+                    i,
+                    $"{i}%"
+                );
+            }
+
         }
     }
 }

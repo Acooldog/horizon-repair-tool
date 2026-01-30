@@ -229,11 +229,17 @@ namespace test.src.Services.Managers
                         onCompeled?.Invoke(versionL.v1, versionL.v2);
 
                     }
+                    // 如果获取失败
+                    else
+                    {
+                        onCompeled?.Invoke(new Version(0, 0, 0), new Version(0, 0, 0));
+                    }
                 });
             }
             catch (Exception ex)
             {
                 Logs.LogError($"获取版本失败: {ex.Message}", ex);
+                onCompeled?.Invoke(versionL.v1, versionL.v2);
             }
         }
     }
