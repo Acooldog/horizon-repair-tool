@@ -1,0 +1,41 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET 8.0
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.400'
+    
+    - name: Setup Node.js 22
+      uses: actions/setup-node@v3
+      with:
+        node-version: '22.21.0'
+        cache: 'npm'
+    
+    - name: Install npm dependencies
+      run: npm ci
+    
+    - name: Build .NET application
+      run: dotnet build -c Release
+    
+    - name: Run packaging script
+      run: npm run package
+    
+    - name: Run Semantic Release
+      run: npx semantic-release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
