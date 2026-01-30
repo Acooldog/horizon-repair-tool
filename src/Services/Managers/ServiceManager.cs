@@ -1,21 +1,18 @@
-﻿using System;
-using System.Linq;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.ServiceProcess;
 using System.Management;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using test.src.Services.Helpers;
+using System.Text;
+
+using EnumerationOptions = System.Management.EnumerationOptions; // 明确使用Management命名空间的EnumerationOptions
 
 namespace test.src.Services.Managers
 {
     public class ServiceManager
     {
         /// <summary>
-        /// 通过显示名称获取服务名称
+        /// 通过显示名称获取服务名称（使用WMI查询）
         /// </summary>
-        /// <param name="displayName">服务显示名称</param>
-        /// <returns>服务名称，如果未找到则返回null</returns>
         public static async Task<string?> GetServiceNameByDisplayNameAsync(string displayName)
         {
             if (string.IsNullOrWhiteSpace(displayName))
@@ -28,17 +25,39 @@ namespace test.src.Services.Managers
             {
                 try
                 {
-                    Logs.LogInfo($"正在通过显示名称查询服务: '{displayName}'");
+                    Logs.LogInfo($"正在通过WMI查询服务名称: '{displayName}'");
 
+                    // 使用WMI查询服务名称
                     using (var searcher = new ManagementObjectSearcher(
                         $"SELECT Name FROM Win32_Service WHERE DisplayName = '{displayName.Replace("'", "''")}'"))
                     {
-                        foreach (ManagementObject service in searcher.Get())
+                        var options = new EnumerationOptions
+                        {
+                            Timeout = TimeSpan.FromSeconds(10), // 设置超时
+                            ReturnImmediately = true
+                        };
+                        searcher.Options = options;
+
+                        ManagementObjectCollection? services = null;
+
+                        // 使用Task包装WMI查询，便于超时控制
+                        var wmiTask = Task.Run(() => searcher.Get());
+                        if (wmiTask.Wait(TimeSpan.FromSeconds(15)))
+                        {
+                            services = wmiTask.Result;
+                        }
+                        else
+                        {
+                            Logs.LogWarning($"WMI查询超时，尝试回退方法");
+                            throw new System.TimeoutException("WMI查询超时");
+                        }
+
+                        foreach (ManagementObject service in services)
                         {
                             string serviceName = service["Name"]?.ToString() ?? "";
                             if (!string.IsNullOrEmpty(serviceName))
                             {
-                                Logs.LogInfo($"找到服务: 显示名称='{displayName}', 服务名称='{serviceName}'");
+                                Logs.LogInfo($"WMI找到服务: 显示名称='{displayName}', 服务名称='{serviceName}'");
                                 return serviceName;
                             }
                         }
@@ -48,9 +67,14 @@ namespace test.src.Services.Managers
                         return GetServiceNameByDisplayNameFallback(displayName);
                     }
                 }
+                catch (System.TimeoutException)
+                {
+                    Logs.LogWarning($"WMI查询超时，回退到ServiceController查询");
+                    return GetServiceNameByDisplayNameFallback(displayName);
+                }
                 catch (Exception ex)
                 {
-                    Logs.LogError($"通过显示名称查询服务失败: '{displayName}'", ex);
+                    Logs.LogError($"通过WMI查询服务名称失败: '{displayName}'", ex);
 
                     // 回退到通过ServiceController查询
                     try
@@ -475,7 +499,7 @@ namespace test.src.Services.Managers
         }
 
         /// <summary>
-        /// 通过 WMI 获取服务启动类型
+        /// 通过 WMI 获取服务启动类型（带超时控制）
         /// </summary>
         private static async Task<string?> GetServiceStartTypeFromWMIAsync(string serviceName)
         {
@@ -486,15 +510,32 @@ namespace test.src.Services.Managers
                     using (var searcher = new ManagementObjectSearcher(
                         $"SELECT StartMode FROM Win32_Service WHERE Name = '{serviceName}'"))
                     {
-                        foreach (ManagementObject service in searcher.Get())
+                        var options = new EnumerationOptions
                         {
-                            return service["StartMode"]?.ToString();
+                            Timeout = TimeSpan.FromSeconds(10),
+                            ReturnImmediately = true
+                        };
+                        searcher.Options = options;
+
+                        // 使用超时控制
+                        var getTask = Task.Run(() => searcher.Get());
+                        if (getTask.Wait(TimeSpan.FromSeconds(15)))
+                        {
+                            foreach (ManagementObject service in getTask.Result)
+                            {
+                                return service["StartMode"]?.ToString();
+                            }
+                        }
+                        else
+                        {
+                            Logs.LogWarning($"WMI查询启动类型超时，回退到SC命令");
+                            return GetStartTypeFromSC(serviceName);
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // 回退到 sc query
+                    Logs.LogWarning($"WMI查询启动类型失败: {ex.Message}，回退到SC命令");
                     return GetStartTypeFromSC(serviceName);
                 }
 
@@ -503,7 +544,7 @@ namespace test.src.Services.Managers
         }
 
         /// <summary>
-        /// 通过 sc qc 命令获取启动类型
+        /// 通过 sc qc 命令获取启动类型（增强解析）
         /// </summary>
         private static string? GetStartTypeFromSC(string serviceName)
         {
@@ -512,41 +553,59 @@ namespace test.src.Services.Managers
                 var psi = new ProcessStartInfo
                 {
                     FileName = "sc",
-                    Arguments = $"qc \"{serviceName}\"",  // qc 查询配置
+                    Arguments = $"qc \"{serviceName}\"",
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = Encoding.UTF8
                 };
 
                 using (var process = Process.Start(psi))
                 {
                     if (process == null) return null;
 
-                    process.WaitForExit();
+                    process.WaitForExit(15000); // 15秒超时
                     string output = process.StandardOutput.ReadToEnd();
 
-                    // 解析 START_TYPE
+                    // 增强解析逻辑
                     var lines = output.Split('\n');
                     foreach (var line in lines)
                     {
-                        if (line.Contains("START_TYPE"))
+                        string trimmedLine = line.Trim();
+
+                        if (trimmedLine.Contains("START_TYPE"))
                         {
-                            if (line.Contains("DISABLED"))
+                            if (trimmedLine.Contains("DISABLED") || trimmedLine.Contains("4"))
                                 return "disabled";
-                            else if (line.Contains("DEMAND_START"))
+                            else if (trimmedLine.Contains("DEMAND_START") || trimmedLine.Contains("3"))
                                 return "manual";
-                            else if (line.Contains("AUTO_START"))
+                            else if (trimmedLine.Contains("AUTO_START") || trimmedLine.Contains("2"))
                                 return "auto";
                         }
+
+                        // 同时检查启动模式行
+                        if (trimmedLine.Contains("START_TYPE") && trimmedLine.Contains(":"))
+                        {
+                            var parts = trimmedLine.Split(':');
+                            if (parts.Length >= 2)
+                            {
+                                string value = parts[1].Trim();
+                                if (value.Contains("DISABLED")) return "disabled";
+                                if (value.Contains("DEMAND_START")) return "manual";
+                                if (value.Contains("AUTO_START")) return "auto";
+                            }
+                        }
                     }
+
+                    Logs.LogWarning($"无法从SC输出中解析启动类型: {output}");
+                    return null;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Logs.LogError($"SC命令查询启动类型失败: {ex.Message}");
                 return null;
             }
-
-            return null;
         }
 
         /// <summary>
@@ -660,42 +719,111 @@ namespace test.src.Services.Managers
         }
 
         /// <summary>
-        /// 设置服务启动类型（智能选择 WMI 或 sc）
+        /// 设置服务启动类型（优先使用SC命令，WMI作为备选）
         /// </summary>
-        /// <param name="serviceName">服务名</param>
-        /// <param name="startType">启动类型: disabled, manual, auto</param>
         private static async Task SetServiceStartTypeAsync(string serviceName, string startType)
         {
             Logs.LogInfo($"设置服务 '{serviceName}' 启动类型为: {startType}");
 
             try
             {
-                // 首选使用 WMI
-                await SetServiceStartTypeByWMIAsync(serviceName, startType);
+                // 首选使用SC命令（更稳定）
+                await SetServiceStartTypeBySCAsync(serviceName, startType);
             }
-            catch (Exception wmiEx)
+            catch (Exception scEx)
             {
-                Logs.LogWarning($"WMI 设置失败，尝试 sc 命令: {wmiEx.Message}");
+                Logs.LogWarning($"SC命令设置失败，尝试WMI: {scEx.Message}");
 
                 try
                 {
-                    // 回退到 sc 命令
-                    await Task.Run(() => FallbackToSCCommand(serviceName, startType));
+                    // 回退到WMI
+                    await SetServiceStartTypeByWMIAsync(serviceName, startType);
                 }
-                catch (Exception scEx)
+                catch (Exception wmiEx)
                 {
                     // 记录详细的错误信息
-                    Logs.LogError($"所有设置方法都失败", scEx);
+                    Logs.LogError($"所有设置方法都失败", wmiEx);
 
                     // 抛出合并的异常信息
                     throw new InvalidOperationException(
                         $"无法设置服务 '{serviceName}' 的启动类型\n" +
-                        $"WMI 错误: {wmiEx.Message}\n" +
-                        $"SC 错误: {scEx.Message}",
-                        scEx
+                        $"SC命令错误: {scEx.Message}\n" +
+                        $"WMI错误: {wmiEx.Message}",
+                        wmiEx
                     );
                 }
             }
+        }
+
+        /// <summary>
+        /// 使用SC命令设置服务启动类型（新增方法）
+        /// </summary>
+        private static async Task SetServiceStartTypeBySCAsync(string serviceName, string startType)
+        {
+            Logs.LogInfo($"使用SC命令设置服务 '{serviceName}' 启动类型为: {startType}");
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    string scStartType = startType.ToLower() switch
+                    {
+                        "disabled" => "disabled",
+                        "manual" => "demand",
+                        "auto" => "auto",
+                        _ => throw new ArgumentException($"不支持的启动类型: {startType}")
+                    };
+
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "sc",
+                        Arguments = $"config \"{serviceName}\" start= {scStartType}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    using (var process = new Process())
+                    {
+                        process.StartInfo = psi;
+                        process.Start();
+
+                        // 异步读取输出
+                        var outputTask = process.StandardOutput.ReadToEndAsync();
+                        var errorTask = process.StandardError.ReadToEndAsync();
+
+                        // 设置超时
+                        if (!process.WaitForExit(30000)) // 30秒超时
+                        {
+                            process.Kill();
+                            throw new System.TimeoutException("SC命令执行超时");
+                        }
+
+                        string output = outputTask.Result;
+                        string error = errorTask.Result;
+
+                        if (process.ExitCode == 0)
+                        {
+                            Logs.LogInfo($"SC命令成功设置服务 '{serviceName}' 启动类型为: {startType}");
+                        }
+                        else
+                        {
+                            // 检查错误类型
+                            if (error.Contains("1060") || output.Contains("指定的服务未安装"))
+                            {
+                                throw new InvalidOperationException($"服务 '{serviceName}' 不存在");
+                            }
+                            throw new InvalidOperationException($"SC命令失败 (退出码: {process.ExitCode}): {error}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logs.LogError($"SC命令设置服务启动类型失败: {ex.Message}");
+                    throw;
+                }
+            });
         }
 
         /// <summary>
@@ -848,11 +976,12 @@ namespace test.src.Services.Managers
                     {
                         var services = searcher.Get();
 
+                        Logs.LogInfo($"正在查找服务: {serviceName}");
                         if (services.Count == 0)
-                        {
+                        {   
                             throw new InvalidOperationException($"找不到服务: {serviceName}");
                         }
-
+                        Logs.LogInfo($"找到服务: {serviceName}");
                         foreach (ManagementObject service in services)
                         {
                             try
