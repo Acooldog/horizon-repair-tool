@@ -1,5 +1,8 @@
 using test.src.Services.Helpers;
 using test.src.Services.Managers;
+using test.src.Services.Model;
+using System;
+using System.Diagnostics;
 
 namespace test
 {
@@ -7,29 +10,55 @@ namespace test
     {
         public Home()
         {
+            string SoftName = string.Empty;
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.FixedDialog;  // 固定对话框，不可调整大小
             Form1_Load();
-            SetSoft();
+
         }
 
-        private async void SetSoft()
+        #region 窗体加载事件
+
+        /// <summary>
+        /// 加载窗体的函数
+        /// </summary>
+        private void Form1_Load()
         {
-            await GetVersion.GetNowVersion((version, name, compeled) =>
+
+            new IconCon(this);
+
+            try
             {
-                if (compeled)
-                {   
-                    // 设置版本
-                    this.NowVersion.Text = $"版本{version}";
-                    // 根据文本内容扩充
-                    this.NowVersion.AutoSize = true;
-                }
-                else
+                VersionMaster.SetAndGetVersion((v1, v2) =>
                 {
-                    this.NowVersion.Text = "版本获取失败";
-                }
-            });
+                    this.NowVersion.Text = $"v{v1}";
+                    // 本地版本号小于远程版本号
+                    if (v1 < v2)
+                    {
+                        this.NewVesion.Text = $"新版本：{v2}, 点我下载";
+                    }
+                    else if (v2 < v1)
+                    {
+                        this.NewVesion.Text = $"古 v{v2}";
+                    }
+                    else
+                    {
+                        this.NewVesion.Visible = false;
+                    }
+                });
+            }
+            catch (Exception)
+            {
+                this.NowVersion.Text = "无法连接服务器";
+                this.NewVesion.Visible = false;
+            }
+
+            this.Text = "地平线修复工具";
         }
+
+        #endregion 窗体加载事件
+
+        #region 按钮点击事件
 
         /// <summary>
         /// 启用必要服务
@@ -79,12 +108,6 @@ namespace test
             }
         }
 
-        private void Form1_Load()
-        {
-
-            new IconCon(this);
-        }
-
 
         /// <summary>
         /// 禁用与地平线冲突的服务
@@ -108,6 +131,29 @@ namespace test
                     this.disableService.Enabled = true;
                 }
             });
+        }
+
+        #endregion
+
+        private void NewVesion_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string url = "https://gitee.com/daoges_x/horizon-repair-tool/releases";
+
+                // 使用ProcessStartInfo更安全
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                };
+                Process.Start(processStartInfo);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"无法打开链接：{ex.Message}", "错误",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

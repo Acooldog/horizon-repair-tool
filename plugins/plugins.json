@@ -2,7 +2,7 @@
   // 应用信息
   "Application": {
     "Name": "地平线修复工具",
-    "Version": "1.0.0"
+    "Version": "v1.0.0"
   },
   // 图标
   "icon": "img/ke.ico",

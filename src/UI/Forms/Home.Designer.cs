@@ -34,13 +34,13 @@ namespace test
             disableService = new Button();
             statusStrip1 = new StatusStrip();
             NowVersion = new ToolStripStatusLabel();
-            toolStripStatusLabel2 = new ToolStripStatusLabel();
+            NewVesion = new ToolStripStatusLabel();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // EnableService
             // 
-            EnableService.Location = new Point(140, 12);
+            EnableService.Location = new Point(170, 12);
             EnableService.Name = "EnableService";
             EnableService.Size = new Size(90, 23);
             EnableService.TabIndex = 0;
@@ -60,10 +60,10 @@ namespace test
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { NowVersion, toolStripStatusLabel2 });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { NowVersion, NewVesion });
             statusStrip1.Location = new Point(0, 48);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new Size(242, 22);
+            statusStrip1.Size = new Size(285, 22);
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
             // 
@@ -73,17 +73,18 @@ namespace test
             NowVersion.Size = new Size(40, 17);
             NowVersion.Text = "wait...";
             // 
-            // toolStripStatusLabel2
+            // NewVesion
             // 
-            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            toolStripStatusLabel2.Size = new Size(65, 17);
-            toolStripStatusLabel2.Text = "新版本yon";
+            NewVesion.Name = "NewVesion";
+            NewVesion.Size = new Size(40, 17);
+            NewVesion.Text = "wait...";
+            NewVesion.Click += NewVesion_Click;
             // 
             // Home
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(242, 70);
+            ClientSize = new Size(285, 70);
             Controls.Add(statusStrip1);
             Controls.Add(disableService);
             Controls.Add(EnableService);
@@ -101,6 +102,6 @@ namespace test
         public Button disableService;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel NowVersion;
-        private ToolStripStatusLabel toolStripStatusLabel2;
+        private ToolStripStatusLabel NewVesion;
     }
 }
