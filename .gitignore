@@ -362,9 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# 忽略整个 bin/ 目录
-bin/
+# 排除整个 release 目录
+release/
 
-# 但排除特定的子文件夹
-!bin/img/
-!bin/plugins/
+.vscode/

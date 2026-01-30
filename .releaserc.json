@@ -1,0 +1,16 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    ["@semantic-release/exec", {
+      "prepareCmd": "dotnet build -c Release && npm run package"
+    }],
+    ["@semantic-release/github", {
+      "assets": [
+        "release/*.zip",
+        "README.md"
+      ]
+    }]
+  ]
+}
