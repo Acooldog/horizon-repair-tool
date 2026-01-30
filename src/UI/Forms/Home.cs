@@ -1,21 +1,34 @@
 using test.src.Services.Helpers;
-using Newtonsoft.Json.Linq;
 using test.src.Services.Managers;
 
 namespace test
 {
-    public partial class Form1 : Form
+    public partial class Home : Form
     {
-        public Form1()
+        public Home()
         {
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.FixedDialog;  // 固定对话框，不可调整大小
             Form1_Load();
+            SetSoft();
         }
 
-        private void folderBrowserDialog1_HelpRequest(object sender, EventArgs e)
+        private async void SetSoft()
         {
-
+            await GetVersion.GetNowVersion((version, name, compeled) =>
+            {
+                if (compeled)
+                {   
+                    // 设置版本
+                    this.NowVersion.Text = $"版本{version}";
+                    // 根据文本内容扩充
+                    this.NowVersion.AutoSize = true;
+                }
+                else
+                {
+                    this.NowVersion.Text = "版本获取失败";
+                }
+            });
         }
 
         /// <summary>

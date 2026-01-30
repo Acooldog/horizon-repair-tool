@@ -1,7 +1,7 @@
 ﻿
 namespace test
 {
-    partial class Form1
+    partial class Home
     {   
 
         /// <summary>
@@ -33,14 +33,14 @@ namespace test
             EnableService = new Button();
             disableService = new Button();
             statusStrip1 = new StatusStrip();
-            toolStripStatusLabel1 = new ToolStripStatusLabel();
+            NowVersion = new ToolStripStatusLabel();
             toolStripStatusLabel2 = new ToolStripStatusLabel();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // EnableService
             // 
-            EnableService.Location = new Point(142, 21);
+            EnableService.Location = new Point(140, 12);
             EnableService.Name = "EnableService";
             EnableService.Size = new Size(90, 23);
             EnableService.TabIndex = 0;
@@ -50,7 +50,7 @@ namespace test
             // 
             // disableService
             // 
-            disableService.Location = new Point(12, 21);
+            disableService.Location = new Point(12, 12);
             disableService.Name = "disableService";
             disableService.Size = new Size(106, 23);
             disableService.TabIndex = 1;
@@ -60,18 +60,18 @@ namespace test
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2 });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { NowVersion, toolStripStatusLabel2 });
             statusStrip1.Location = new Point(0, 48);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(242, 22);
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
             // 
-            // toolStripStatusLabel1
+            // NowVersion
             // 
-            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            toolStripStatusLabel1.Size = new Size(14, 17);
-            toolStripStatusLabel1.Text = "v";
+            NowVersion.Name = "NowVersion";
+            NowVersion.Size = new Size(40, 17);
+            NowVersion.Text = "wait...";
             // 
             // toolStripStatusLabel2
             // 
@@ -79,7 +79,7 @@ namespace test
             toolStripStatusLabel2.Size = new Size(65, 17);
             toolStripStatusLabel2.Text = "新版本yon";
             // 
-            // Form1
+            // Home
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -87,8 +87,8 @@ namespace test
             Controls.Add(statusStrip1);
             Controls.Add(disableService);
             Controls.Add(EnableService);
-            Name = "Form1";
-            Text = "Form1";
+            Name = "Home";
+            Text = "wait...";
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             ResumeLayout(false);
@@ -100,7 +100,7 @@ namespace test
         private Button EnableService;
         public Button disableService;
         private StatusStrip statusStrip1;
-        private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripStatusLabel NowVersion;
         private ToolStripStatusLabel toolStripStatusLabel2;
     }
 }

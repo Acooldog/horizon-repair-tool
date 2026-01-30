@@ -1,5 +1,7 @@
 using test.src.Services.Managers;
 using test.src.Services.Helpers;
+using System.Numerics;
+using System.Xml.Linq;
 
 namespace test
 {
@@ -25,7 +27,7 @@ namespace test
             ApplicationConfiguration.Initialize();
             try
             {
-                Application.Run(new Form1());
+                Application.Run(new Home());
             }
             catch (Exception ex)
             {
