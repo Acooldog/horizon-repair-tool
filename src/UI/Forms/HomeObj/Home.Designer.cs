@@ -35,9 +35,7 @@ namespace test
             statusStrip1 = new StatusStrip();
             NowVersion = new ToolStripStatusLabel();
             NewVesion = new ToolStripStatusLabel();
-            btnStart = new Button();
             Pbar = new ProgressBar();
-            lblStatus = new Label();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -64,9 +62,9 @@ namespace test
             // statusStrip1
             // 
             statusStrip1.Items.AddRange(new ToolStripItem[] { NowVersion, NewVesion });
-            statusStrip1.Location = new Point(0, 115);
+            statusStrip1.Location = new Point(0, 70);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new Size(289, 22);
+            statusStrip1.Size = new Size(274, 22);
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
             // 
@@ -83,40 +81,20 @@ namespace test
             NewVesion.Text = "点我检查更新";
             NewVesion.Click += NewVesion_Click;
             // 
-            // btnStart
-            // 
-            btnStart.Location = new Point(12, 53);
-            btnStart.Name = "btnStart";
-            btnStart.Size = new Size(75, 23);
-            btnStart.TabIndex = 3;
-            btnStart.Text = "开始";
-            btnStart.UseVisualStyleBackColor = true;
-            btnStart.Click += btnStart_Click_1;
-            // 
             // Pbar
             // 
-            Pbar.Location = new Point(114, 53);
+            Pbar.Location = new Point(12, 41);
             Pbar.Name = "Pbar";
-            Pbar.Size = new Size(137, 23);
+            Pbar.Size = new Size(248, 23);
             Pbar.TabIndex = 4;
-            // 
-            // lblStatus
-            // 
-            lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(153, 79);
-            lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(43, 17);
-            lblStatus.TabIndex = 5;
-            lblStatus.Text = "label1";
+            Pbar.Visible = false;
             // 
             // Home
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(289, 137);
-            Controls.Add(lblStatus);
+            ClientSize = new Size(274, 92);
             Controls.Add(Pbar);
-            Controls.Add(btnStart);
             Controls.Add(statusStrip1);
             Controls.Add(disableService);
             Controls.Add(EnableService);
@@ -135,8 +113,6 @@ namespace test
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel NowVersion;
         private ToolStripStatusLabel NewVesion;
-        private Button btnStart;
         private ProgressBar Pbar;
-        private Label lblStatus;
     }
 }

@@ -6,9 +6,11 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- 设置输出exe名称 -->
     <AssemblyName>地平线修复工具</AssemblyName>
     <ApplicationIcon>img/ke.ico</ApplicationIcon>
+    
+    <!-- 关键：禁用资源文件的默认依赖关系 -->
+    <EmbeddedResourceUseDependentUponConvention>false</EmbeddedResourceUseDependentUponConvention>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,12 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 包含plugins文件夹 -->
     <Content Include="plugins\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-
-    <!-- 包含img文件夹 -->
     <Content Include="img\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -34,6 +33,31 @@
     <Folder Include="img\" />
     <Folder Include="src\UI\Controls\" />
     <Folder Include="src\UI\Dialogs\" />
+  </ItemGroup>
+
+  <!-- 修复资源文件冲突 -->
+  <ItemGroup>
+    <!-- Home.resx 保持默认 -->
+    <EmbeddedResource Update="Forms\HomeObj\Home.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Home.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    
+    <!-- HomeProgressBar.resx 设置为独立资源 -->
+    <EmbeddedResource Update="Forms\HomeObj\HomeProgressBar.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>HomeProgressBar.Designer.cs</LastGenOutput>
+      <DependentUpon></DependentUpon>
+      <LogicalName>test.HomeProgressBar.resources</LogicalName>
+    </EmbeddedResource>
+    
+    <!-- HomeSolt.resx 设置为独立资源 -->
+    <EmbeddedResource Update="Forms\HomeObj\HomeSolt.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>HomeSolt.Designer.cs</LastGenOutput>
+      <DependentUpon></DependentUpon>
+      <LogicalName>test.HomeSolt.resources</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
