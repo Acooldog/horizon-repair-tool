@@ -31,23 +31,23 @@ namespace test
         /// 加载窗体的函数
         /// </summary>
         private async void Form1_Load()
-        {
+        {   
+            // 自动调整大小
+            this.AutoSize = true;
 
             new IconCon(this);
 
-            await GetVersion.GetNowVersion( (version, name, done) =>
-            {   
-                if (done)
-                {
-                    this.NowVersion.Text = version;
-                }
-                else
-                {
-                    this.NowVersion.Text = "错误";
-                    MessageBox.Show("无法获取软件版本！请检查是否修改了软件配置文件", "错误",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            } );
+            string? result = await GetVersion.GetNowVersion();
+            if (!string.IsNullOrEmpty(result))
+            {
+                this.NowVersion.Text = result;
+            }
+            else
+            {
+                this.NowVersion.Text = "错误";
+                MessageBox.Show("无法获取版本信息！请检查是否修改了软件配置文件", "错误",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             this.Text = "地平线修复工具";
         }
@@ -136,39 +136,42 @@ namespace test
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void NewVesion_Click(object sender, EventArgs e)
+        private async void NewVesion_Click(object sender, EventArgs e)
         {   
             // 没有点击过检查更新
             if (!checkUpdate)
             {
                 try
                 {
-                    VersionMaster.SetAndGetVersion((v1, v2) =>
-                    {   
-                        // 如果版本获取失败
-                        if (v1 == new Version(0, 0, 0))
-                        {
-                            if (DialogResult.Yes == MessageBox.Show("检查更新失败，可能是API请求频繁，可以手动去github或者gitee看！" +
-                                "是否要打开gitee？",
-                                "获取版本失败",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Error))
-                            {   
-                                // 打开网页
-                                URLEdit.JumpUrl("https://gitee.com/daoges_x/horizon-repair-tool/releases");
-                            }
+                    (Version v1, Version v2) =  await VersionMaster.SetAndGetVersion();
+                    // 如果版本获取失败
+                    if (v1 == new Version(0, 0, 0))
+                    {
+                        if (DialogResult.Yes == MessageBox.Show("检查更新失败，可能是API请求频繁，可以手动去github或者gitee看！" +
+                            "是否要打开gitee？",
+                            "获取版本失败",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Error))
+                        {   
+                            // 打开网页
+                            URLEdit.JumpUrl("https://gitee.com/daoges_x/horizon-repair-tool/releases");
                         }
-                        // 本地版本号小于远程版本号
-                        if (v1 < v2)
-                        {
-                            this.NewVesion.Text = $"新版本：{v2}, 点我下载";
-                            checkUpdate = true;
-                        }
-                        else if (v2 < v1)
-                        {
-                            this.NewVesion.Text = $"古 v{v2}";
-                        }
-                    });
+                    }
+                    // 本地版本号小于远程版本号
+                    if (v1 < v2)
+                    {
+                        this.NewVesion.Text = $"新版本：{v2}, 点我下载";
+                        checkUpdate = true;
+                    }
+                    else if (v2 < v1)
+                    {
+                        this.NewVesion.Text = $"古 v{v2}";
+                    }
+                    else if (v1 == v2)
+                    {
+                        this.NewVesion.Text = "当前为最新版本";
+                        this.NewVesion.Enabled = false;
+                    }
                 }
                 catch (Exception)
                 {
@@ -272,36 +275,9 @@ namespace test
                             num,
                             v
                         );
+                       
                     });
             }
-            //ServiceP.test((num, v) =>
-            //{
-            //    worker.ReportProgress(
-            //        num,
-            //        $"{v}%"
-            //    );
-            //});
-
-            // 模拟一个耗时任务
-            //for (int i = 0; i <= 100; i++)
-            //{
-            //    // 检查是否请求取消
-            //    if (worker.CancellationPending)
-            //    {
-            //        e.Cancel = true;
-            //        return;
-            //    }
-
-            //    // 模拟工作
-            //    Thread.Sleep(50);
-
-            //    // 报告进度
-            //    worker.ReportProgress(
-            //        i,
-            //        $"{i}%"
-            //    );
-            //}
-
         }
 
         // 进度更新回调
@@ -312,7 +288,7 @@ namespace test
 
             // 使用?和??运算符安全访问
             lblStatus!.Text = e.UserState?.ToString() ?? $"进度: {e.ProgressPercentage}%";
-            //this.Text = $"进度示例 - {e.ProgressPercentage}%";
+            this.Text = $"处理进度 - {e.ProgressPercentage}%";
 
             // 可选：改变颜色
             if (Pbar != null)
@@ -347,6 +323,13 @@ namespace test
                 lblStatus!.Text = "任务完成！";
                 MessageBox.Show("任务完成！", "成功",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                string softname = GetVersion.GetSoftName();
+                // 如果获取的名称不为空
+                if (!(string.IsNullOrEmpty(softname)))
+                {
+                    this.Text = softname;
+                }
             }
 
             // 重置按钮状态

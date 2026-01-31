@@ -31,5 +31,14 @@ namespace test.src.Services.Managers.ServiceManagerAll
             }
             return oldNum;
         }
+
+        #region 计算
+
+        private static int calculateProgress(int nowNum, int allNum)
+        {
+            return (nowNum * 100) / allNum;
+        }
+
+        #endregion 计算
     }
 }

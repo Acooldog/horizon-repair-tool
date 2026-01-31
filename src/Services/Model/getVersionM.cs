@@ -19,7 +19,7 @@ namespace test.src.Services.Model
     /// </summary>
     public class VersionL
     {
-        public Version v1 { get; set; } = new Version(1, 0, 0);
+        public Version v1 { get; set; } = new Version(0, 0, 0);
         public Version v2 { get; set; } = new Version(0, 0, 0);
     }
 

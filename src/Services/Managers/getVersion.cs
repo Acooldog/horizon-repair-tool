@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using test.src.Services.Helpers;
 using test.src.Services.Model;
 
@@ -23,6 +24,11 @@ namespace test.src.Services.Managers
             public bool Done { get; set; } = false;
         }
 
+        /// <summary>
+        /// 获取当前版本信息
+        /// </summary>
+        /// <param name="onCompeled"></param>
+        /// <returns></returns>
         public static async Task GetNowVersion(
             Action<string,string,bool>? onCompeled = null)
         {
@@ -41,7 +47,6 @@ namespace test.src.Services.Managers
                     result.Version = json.Application.Version;
                     result.SoftName = json.Application.Name;
                     result.Done = true;
-
                 }
                 catch (Exception ex)
                 {   
@@ -51,10 +56,70 @@ namespace test.src.Services.Managers
                 }
                 finally
                 {
-                    onCompeled?.Invoke(result.Version, result.SoftName, result.Done);  
+                    onCompeled?.Invoke(result.Version, result.SoftName, result.Done);
                 }
 
             });
+        }
+
+        /// <summary>
+        /// 获取当前版本信息 重载
+        /// </summary>
+        /// <param name="onCompeled"></param>
+        /// <returns></returns>
+        public static async Task<string?> GetNowVersion()
+        {
+            return await Task.Run(() =>
+            {
+                VersionInfo result = new VersionInfo();
+                try
+                {
+                    string RPath = "plugins/plugins.json";
+                    string fullPath = Path.Combine(pathEdit.GetApplicationRootDirectory(), RPath);
+                    dynamic json = JsonEdit.ReadJsonFile(fullPath);
+
+                    Logs.LogInfo($"获取成功，版本号: {json.Application.Version}," +
+                        $"软件名: {json.Application.Name}");
+                    // 返回结果
+                    result.Version = json.Application.Version;
+                    result.SoftName = json.Application.Name;
+                    result.Done = true;
+
+                    return result.Version;
+                }
+                catch (Exception ex)
+                {
+                    Logs.LogError($"获取版本信息失败: {ex.Message}", ex);
+                    result.Done = false;
+
+                    return string.Empty;
+                }
+
+            });
+        }
+
+        // 获取软件名
+        public static string GetSoftName()
+        {
+            try
+            {
+                string RPath = "plugins/plugins.json";
+                string fullPath = Path.Combine(pathEdit.GetApplicationRootDirectory(), RPath);
+                dynamic json = JsonEdit.ReadJsonFile(fullPath);
+
+                Logs.LogInfo($"获取成功，版本号: {json.Application.Version}," +
+                    $"软件名: {json.Application.Name}");
+                // 返回结果
+                return json.Application.Name;
+
+            }
+            catch (Exception ex)
+            {
+                Logs.LogError($"获取软件信息失败: {ex.Message}", ex);
+                    
+                return string.Empty;
+            }
+
         }
 
         /// <summary>
@@ -204,8 +269,51 @@ namespace test.src.Services.Managers
         /// 设置并获取版本
         /// </summary>
         /// <param name="onCompeled">回调函数，获取本地版本和远程版本</param>
-        public static void SetAndGetVersion(Action<Version, Version>? onCompeled = null)
+        public static async Task<(Version, Version)> SetAndGetVersion()
         {   
+            // 初始化数据模型
+            VersionL versionL = new();
+            try
+            {
+                string? resultVersionNow =  await GetVersion.GetNowVersion();
+                Logs.LogInfo("获取版本完成");
+                ValueTuple<string?, bool, string> result = await GiteeVersionFetcher.GetLatestVersionAsync();
+                // 获取版本成功
+                if (result.Item2)
+                {
+                    // 对比版本号
+                    // 本地版本号去除v
+                    string version1 = VersionEdit.RemoveVPrefix(resultVersionNow ?? "0.0.0");
+                    // 远程版本号去除v
+                    string version2 = VersionEdit.RemoveVPrefix(result.Item1 ?? "0.0.0");
+
+                    versionL.v1 = new Version(version1);
+                    versionL.v2 = new Version(version2);
+
+                    return (versionL.v1, versionL.v2);
+
+                }
+                // 如果获取失败
+                else
+                {
+                    return (versionL.v1, versionL.v2);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.LogError($"获取版本失败: {ex.Message}", ex);
+                return (versionL.v1, versionL.v2);
+            }
+        }
+
+        #region 重载
+
+        /// <summary>
+        /// 设置并获取版本 重载 无回调函数
+        /// </summary>
+        /// <param name="onCompeled">回调函数，获取本地版本和远程版本</param>
+        public static void SetAndGetVersion(Action<Version, Version>? onCompeled = null)
+        {
             // 初始化数据模型
             VersionL versionL = new();
             try
@@ -242,5 +350,7 @@ namespace test.src.Services.Managers
                 onCompeled?.Invoke(versionL.v1, versionL.v2);
             }
         }
+
+        #endregion 重载
     }
 }

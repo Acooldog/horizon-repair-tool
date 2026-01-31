@@ -98,7 +98,7 @@ namespace test.src.Services.Managers.ServiceManagerAll
 
         // 以下是原有的方法，保持不变
         /// <summary>
-        /// 禁用单个 Windows 服务
+        /// 通过服务名称禁用单个 Windows 服务
         /// </summary>
         private static async Task DisableSingleServiceAsync(string serviceName)
         {

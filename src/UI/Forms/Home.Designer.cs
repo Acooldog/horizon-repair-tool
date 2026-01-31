@@ -79,8 +79,8 @@ namespace test
             // NewVesion
             // 
             NewVesion.Name = "NewVesion";
-            NewVesion.Size = new Size(40, 17);
-            NewVesion.Text = "wait...";
+            NewVesion.Size = new Size(80, 17);
+            NewVesion.Text = "点我检查更新";
             NewVesion.Click += NewVesion_Click;
             // 
             // btnStart
@@ -121,7 +121,7 @@ namespace test
             Controls.Add(disableService);
             Controls.Add(EnableService);
             Name = "Home";
-            Text = "wait...";
+            Text = "c";
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             ResumeLayout(false);
