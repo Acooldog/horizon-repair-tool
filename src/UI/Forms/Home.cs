@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.ComponentModel;
 using System.Security.Policy;
 using test.src.Services.Internetwork;
+using Newtonsoft.Json.Linq;
 
 namespace test
 {
@@ -245,13 +246,40 @@ namespace test
                 return;
             }
 
-            ServiceP.test((num, v) =>
+            // 拼接json路径
+            string jsonPath = pathEdit.GetApplicationRootDirectory() + "\\plugins\\plugins.json";
+            // 读取json文件
+            JObject ServiceNameList = JsonEdit.ReadJsonFile(jsonPath);
+            dynamic ServiceName = ServiceNameList;
+            // 获取数组并转换
+            JArray? jArray = ServiceName.fix["disableClashName"] as JArray;
+            if (jArray is not null)
             {
-                worker.ReportProgress(
-                    num,
-                    $"{v}%"
-                );
-            });
+                List<string> serviceList = new List<string>();
+                foreach (var item in jArray)
+                {
+                    serviceList.Add(item.ToString());
+                }
+
+                string[] serviceName = serviceList.ToArray();
+                Logs.LogInfo($"{string.Join(", ", serviceName)}");
+                // 调用重载更新进度条
+                ServiceManager.DisableServicesAsync(serviceName, true, true,
+                    (num, v) =>
+                    {   
+                       worker.ReportProgress(
+                            num,
+                            v
+                        );
+                    });
+            }
+            //ServiceP.test((num, v) =>
+            //{
+            //    worker.ReportProgress(
+            //        num,
+            //        $"{v}%"
+            //    );
+            //});
 
             // 模拟一个耗时任务
             //for (int i = 0; i <= 100; i++)

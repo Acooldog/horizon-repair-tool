@@ -32,6 +32,7 @@ namespace test.src.Services.Model
         public int failedCount { get; set; } = 0;
         public int notExistCount { get; set; } = 0;
         public int nameResolveFailedCount { get; set; } = 0;
+        public int fullCount { get; set; } = 0;
     }
 
 }
