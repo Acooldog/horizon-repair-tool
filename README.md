@@ -142,8 +142,8 @@ test/
 │   │   └── repairs/            # 修复模块
 │   └── UI/                     # 用户界面
 │       └── Forms/              # 窗体
-│           ├── Home.cs         # 主窗体逻辑
-│           └── Home.Designer.cs # 主窗体设计
+│           ├── Fh4CustomRepair.cs         # 主窗体逻辑
+│           └── Fh4CustomRepair.Designer.cs # 主窗体设计
 ├── img/                        # 图片资源
 └── logs/                       # 日志文件（运行时生成）
 ```

@@ -31,16 +31,17 @@
   <ItemGroup>
     <Folder Include="bin\Debug\net8.0-windows\" />
     <Folder Include="img\" />
+    <Folder Include="src\Services\FH4\Helpers\" />
     <Folder Include="src\UI\Controls\" />
     <Folder Include="src\UI\Dialogs\" />
   </ItemGroup>
 
   <!-- 修复资源文件冲突 -->
   <ItemGroup>
-    <!-- Home.resx 保持默认 -->
-    <EmbeddedResource Update="Forms\HomeObj\Home.resx">
+    <!-- Fh4CustomRepair.resx 保持默认 -->
+    <EmbeddedResource Update="Forms\HomeObj\Fh4CustomRepair.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Home.Designer.cs</LastGenOutput>
+      <LastGenOutput>Fh4CustomRepair.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     
     <!-- HomeProgressBar.resx 设置为独立资源 -->
@@ -61,7 +62,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="src\Services\Managers\ServiceManagerAll\ServiceManagerOverload.cs" />
+    <None Include="src\Services\FH4\Managers\ServiceManagerAll\ServiceManagerOverload.cs" />
   </ItemGroup>
 
   <ItemGroup>
