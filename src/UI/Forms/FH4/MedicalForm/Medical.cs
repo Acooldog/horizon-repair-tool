@@ -14,11 +14,21 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         // 诊断结果
         private CombinedDiagnosticResult combinedResult = new CombinedDiagnosticResult();
 
+        // 是否能够重新检测
+        private bool canReDiagnose = false;
+
+        private string Wintitle = "生成诊断报告";
+
         public Medical()
         {
             InitializeComponent();
             InitializeDiagnosisEngine();
             StartCompleteDiagnosis();
+
+            this.Text = $"{Wintitle}";
+
+            // 设置窗体居中
+            this.StartPosition = FormStartPosition.CenterScreen;
         }
 
         private void InitializeDiagnosisEngine()
@@ -75,8 +85,36 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         }
 
         private void CancelBtn_Click_1(object sender, EventArgs e)
-        {
-            CancelDiagnosis();
+        {   
+            Logs.LogInfo($"===== canReDiagnose : {canReDiagnose} =====");
+            if (canReDiagnose)
+            {
+                DialogResult dialogResult = MessageBox.Show(
+                    "是否重新开始诊断？",
+                    "重新开始诊断",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    this.CancelBtn.Text = "取消";
+                    canReDiagnose = false;
+                    StartCompleteDiagnosis();
+                }
+            }
+            else
+            {
+                DialogResult dialogResult = MessageBox.Show(
+                    "是否取消诊断？",
+                    "取消诊断",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (dialogResult == DialogResult.Yes)
+                {
+                    CancelDiagnosis();
+                    this.Close();
+                }
+            }
         }
 
         public void StartCompleteDiagnosis()

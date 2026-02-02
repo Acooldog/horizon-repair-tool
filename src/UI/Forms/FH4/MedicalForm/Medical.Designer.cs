@@ -37,6 +37,7 @@
             CancelBtn = new Button();
             step5Label = new Label();
             step6Label = new Label();
+            TISHI = new Label();
             tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -45,17 +46,18 @@
             tableLayoutPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tableLayoutPanel1.ColumnCount = 1;
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel1.Controls.Add(progressBar, 0, 7);
+            tableLayoutPanel1.Controls.Add(progressBar, 0, 8);
             tableLayoutPanel1.Controls.Add(step1Label, 0, 0);
             tableLayoutPanel1.Controls.Add(step2Label, 0, 1);
             tableLayoutPanel1.Controls.Add(step3Label, 0, 2);
             tableLayoutPanel1.Controls.Add(step4Label, 0, 3);
-            tableLayoutPanel1.Controls.Add(CancelBtn, 0, 8);
+            tableLayoutPanel1.Controls.Add(CancelBtn, 0, 9);
             tableLayoutPanel1.Controls.Add(step5Label, 0, 4);
             tableLayoutPanel1.Controls.Add(step6Label, 0, 5);
+            tableLayoutPanel1.Controls.Add(TISHI, 0, 7);
             tableLayoutPanel1.Location = new Point(12, 12);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
-            tableLayoutPanel1.RowCount = 9;
+            tableLayoutPanel1.RowCount = 10;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
@@ -63,6 +65,7 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.Size = new Size(284, 426);
@@ -152,6 +155,18 @@
             step6Label.Text = "6. 查看必要服务是否开启";
             step6Label.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // TISHI
+            // 
+            TISHI.AutoSize = true;
+            TISHI.Dock = DockStyle.Fill;
+            TISHI.Location = new Point(3, 360);
+            TISHI.Name = "TISHI";
+            TISHI.Size = new Size(278, 17);
+            TISHI.TabIndex = 8;
+            TISHI.Text = "生成诊断报告中，可能需要1-2分钟...";
+            TISHI.TextAlign = ContentAlignment.MiddleCenter;
+            TISHI.Visible = false;
+            // 
             // Medical
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
@@ -176,5 +191,6 @@
         private Button CancelBtn;
         private Label step5Label;
         private Label step6Label;
+        private Label TISHI;
     }
 }

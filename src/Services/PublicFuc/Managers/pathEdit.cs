@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace test.src.Services.FH4.Managers
+namespace test.src.Services.PublicFuc.Managers
 {
     public class pathEdit
     {

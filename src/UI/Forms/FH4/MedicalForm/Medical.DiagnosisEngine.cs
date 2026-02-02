@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using test.src.Services.PublicFuc.Helpers;
+using test.src.Services.PublicFuc.Managers;
 
 namespace test.src.UI.Forms.FH4.MedicalForm
 {
@@ -23,6 +24,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             public long? TcpLatency { get; set; } // ms
             public string Status { get; set; } = "未测试";
             public string ErrorMessage { get; set; } = string.Empty;
+            public bool canReDiagnose { get; set; } = false;
         }
 
         // 其他数据类保持原样...
@@ -37,6 +39,12 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             try
             {
                 Logs.LogInfo("开始执行完整网络诊断流程");
+
+                // 使用 Invoke 确保线程安全
+                this.Invoke((MethodInvoker)delegate
+                {
+                    this.TISHI.Visible = true;
+                });
 
                 // 步骤1: 网络连接检查
                 if (!worker!.CancellationPending)
@@ -83,8 +91,15 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 // 生成完整报告
                 if (!worker!.CancellationPending)
                 {
-                    worker.ReportProgress(96, new ProgressData { Step = 0, Message = "生成诊断报告" });
+                    worker.ReportProgress(0, new ProgressData { Step = 0, Message = "生成诊断报告" });
                     string reportPath = GenerateCompleteDiagnosisReport(combinedResult);
+
+                    // 使用 Invoke 确保线程安全
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        this.CancelBtn.Text = "重新检测";
+                        canReDiagnose = true;
+                    });
 
                     combinedResult.EndTime = DateTime.Now;
 
@@ -94,6 +109,12 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                         Result = combinedResult
                     };
                 }
+
+                // 使用 Invoke 确保线程安全
+                this.Invoke((MethodInvoker)delegate
+                {
+                    this.TISHI.Visible = false;
+                });
             }
             catch (Exception ex)
             {
@@ -107,6 +128,12 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                     ReportPath = reportPath,
                     Result = combinedResult
                 };
+
+                // 使用 Invoke 确保线程安全
+                this.Invoke((MethodInvoker)delegate
+                {
+                    this.TISHI.Visible = true;
+                });
             }
         }
 
@@ -324,6 +351,8 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                     report.AppendLine($"Xbox 社交服务: {result.Step3Result.XboxSocialStatus}");
                     report.AppendLine($"Xbox 商店服务: {result.Step3Result.XboxStoreStatus}");
                     report.AppendLine($"本地凭据状态: {result.Step3Result.LocalCredentialsStatus}");
+                    report.AppendLine("地平线4注意事项: 地平线4代token有时效限制，意思就是，你登录完账号之后，过一段时间Xbox就会不认你这个账号凭据，你需要重新登录才能连接到线上");
+                    report.AppendLine("地平线5注意事项: 在线模式需绑定家园作为spawn点，未设导致连接循环，设置后autosave生效，解锁多人。意思是，你需要开车到你的房子中把这个设置为家，随后重启游戏");
 
                     if (!result.Step3Result.IsXboxServiceHealthy)
                     {
@@ -504,6 +533,15 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                     }
                 }
 
+                string TxtPath = pathEdit.GetApplicationRootDirectory();
+                // 创建日志目录
+                string TxtDir = Path.Combine(TxtPath, "MedicalReport");
+                if (!Directory.Exists(TxtDir))
+                {
+                    Directory.CreateDirectory(TxtDir);
+                    Logs.LogInfo($"目录不存在，创建目录: {TxtDir}");
+                }
+
                 // 诊断结束
                 report.AppendLine("\n" + "=".PadRight(60, '='));
                 report.AppendLine("地平线4网络诊断报告 - 生成完成");
@@ -511,7 +549,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
 
                 // 保存报告到文件
                 string fileName = $"FH4_Diagnosis_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
-                string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), fileName);
+                string filePath = Path.Combine(TxtDir, fileName);
 
                 File.WriteAllText(filePath, report.ToString(), Encoding.UTF8);
                 Logs.LogInfo($"诊断报告已保存到: {filePath}");
@@ -525,9 +563,18 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 // 创建简单的错误报告
                 try
                 {
+                    string TxtPath = pathEdit.GetApplicationRootDirectory();
+                    // 创建日志目录
+                    string TxtDir = Path.Combine(TxtPath, "MedicalReport");
+                    if (!Directory.Exists(TxtDir))
+                    {
+                        Directory.CreateDirectory(TxtDir);
+                        Logs.LogInfo($"目录不存在，创建目录: {TxtDir}");
+                    }
+
                     string errorReport = $"诊断报告生成失败\n错误: {ex.Message}\n时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
                     string fileName = $"FH4_Diagnosis_Error_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
-                    string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), fileName);
+                    string filePath = Path.Combine(TxtDir, fileName);
                     File.WriteAllText(filePath, errorReport, Encoding.UTF8);
                     return filePath;
                 }

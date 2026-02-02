@@ -62,6 +62,13 @@ namespace test.src.UI.Forms.FH4.MedicalForm
 
                 foreach (var serviceItem in disableServices)
                 {
+                    // 使用 Invoke 确保线程安全
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        // 进度条值 = ( 当前数值 × 100 ) / 总数值 
+                        this.step5Label.Text = $"5. 查看是否有冲突的服务正在运行 - {(checkedCount * 100) / totalServices}%";
+                    });
+                    worker.ReportProgress(64 + checkedCount, new ProgressData { Step = 5, Message = "检查冲突服务" });
                     string displayName = serviceItem.ToString();
                     Logs.LogInfo($"检查冲突服务: {displayName}");
 
@@ -115,6 +122,11 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 }
 
                 Logs.LogInfo($"第五步完成: 发现 {result.ConflictingServices.Count} 个冲突服务");
+                // 使用 Invoke 确保线程安全
+                this.Invoke((MethodInvoker)delegate
+                {
+                    this.step5Label.Text = $"5. 查看是否有冲突的服务正在运行";
+                });
 
                 if (result.HasConflicts)
                 {

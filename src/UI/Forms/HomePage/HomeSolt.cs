@@ -41,12 +41,13 @@ namespace test
                     // 本地版本号小于远程版本号
                     if (v1 < v2)
                     {
-                        this.NewVersion.Text = $"新版本：{v2}, 点我下载";
+                        this.NewVersion.Text = $"新版本：v{v2}, 点我下载";
                         checkUpdate = true;
                     }
                     else if (v2 < v1)
                     {
-                        this.NewVersion.Text = $"古 v{v2}";
+                        this.NewVersion.Text = $"领先于 v{v2} 的beta版本";
+                        this.NewVersion.Enabled = false;
                     }
                     else if (v1 == v2)
                     {
