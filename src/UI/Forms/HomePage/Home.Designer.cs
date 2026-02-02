@@ -37,6 +37,7 @@
             FH5GroupBox = new GroupBox();
             FH5Repair = new Button();
             FH5CustomRepair = new Button();
+            medical = new Button();
             statusStrip1.SuspendLayout();
             FH4GroupBox.SuspendLayout();
             FH5GroupBox.SuspendLayout();
@@ -45,7 +46,7 @@
             // statusStrip1
             // 
             statusStrip1.Items.AddRange(new ToolStripItem[] { NowVersion, NewVersion });
-            statusStrip1.Location = new Point(0, 87);
+            statusStrip1.Location = new Point(0, 110);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(300, 22);
             statusStrip1.TabIndex = 0;
@@ -86,11 +87,12 @@
             // 
             // FH4GroupBox
             // 
+            FH4GroupBox.Controls.Add(medical);
             FH4GroupBox.Controls.Add(FH4Repair);
             FH4GroupBox.Controls.Add(FH4CustomRepair);
             FH4GroupBox.Location = new Point(0, 3);
             FH4GroupBox.Name = "FH4GroupBox";
-            FH4GroupBox.Size = new Size(142, 81);
+            FH4GroupBox.Size = new Size(142, 104);
             FH4GroupBox.TabIndex = 3;
             FH4GroupBox.TabStop = false;
             FH4GroupBox.Text = "地平线4";
@@ -126,11 +128,21 @@
             FH5CustomRepair.UseVisualStyleBackColor = true;
             FH5CustomRepair.Click += FH5CustomRepair_Click;
             // 
+            // medical
+            // 
+            medical.Location = new Point(6, 75);
+            medical.Name = "medical";
+            medical.Size = new Size(126, 23);
+            medical.TabIndex = 3;
+            medical.Text = "生成诊断报告";
+            medical.UseVisualStyleBackColor = true;
+            medical.Click += medical_Click;
+            // 
             // Home
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(300, 109);
+            ClientSize = new Size(300, 132);
             Controls.Add(FH5GroupBox);
             Controls.Add(FH4GroupBox);
             Controls.Add(statusStrip1);
@@ -155,5 +167,6 @@
         private GroupBox FH5GroupBox;
         private Button FH5Repair;
         private Button FH5CustomRepair;
+        private Button medical;
     }
 }

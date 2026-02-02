@@ -1,5 +1,6 @@
 ﻿using test.src.Services.PublicFuc.Helpers;
 using test.src.UI.Forms.FH4.CustomRepair;
+using test.src.UI.Forms.FH4.MedicalForm;
 
 namespace test
 {
@@ -29,6 +30,21 @@ namespace test
             fh4CustomRepair.Activate();
             fh4CustomRepair.BringToFront();
             fh4CustomRepair.Focus();
+        }
+
+        // <summary>
+        /// 点击地平线4Medical功能
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void medical_Click(object sender, EventArgs e)
+        {
+            Medical medical = new Medical();
+            medical.Show();
+            medical.Activate();
+            medical.BringToFront();
+            medical.Focus();
+            Logs.LogInfo("用户选择了地平线4Medical功能");
         }
 
     }
