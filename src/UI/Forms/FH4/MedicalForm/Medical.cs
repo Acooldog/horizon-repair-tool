@@ -56,7 +56,6 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         {
             // 这里可以添加网络修复逻辑
             Logs.LogInfo("开始网络修复流程...");
-            StartNetworkCheck();
         }
 
         private void CancelBtn_Click(object sender, EventArgs e)
