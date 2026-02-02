@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,19 +10,15 @@ using System.Net.Sockets;
 using System.Text;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
-
-// 添加日志和动画命名空间
 using test.src.Services.PublicFuc.Helpers;
 using test.src.Services.PublicFuc.Managers;
-using test.src.Services.PublicFuc.Animation;
 
 namespace test.src.UI.Forms.FH4.MedicalForm
 {
-    partial class Medical : Form
+    public partial class Medical
     {
-        
+        #region 第一步：网络连接检查的具体实现方法
 
-        #region 网络诊断相关类定义
         public class NetworkDiagnosticResult
         {
             public bool HasInternetConnection { get; set; }
@@ -30,185 +27,64 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             public string TeredoAdapterStatus { get; set; } = "未找到";
             public string NATType { get; set; } = "未知";
             public bool XboxNetworkingServiceReachable { get; set; }
-            public List<string> Issues { get; set; } = new List<string>();
-            public string Summary { get; set; } = "未完成诊断";
             public List<ServerTestResult> TeredoServerResults { get; set; } = new List<ServerTestResult>();
             public List<ServerTestResult> GameServerResults { get; set; } = new List<ServerTestResult>();
             public ServerTestResult? FastestTeredoServer { get; set; }
             public ServerTestResult? FastestGameServer { get; set; }
-
-            public bool IsNetworkHealthy =>
-                HasInternetConnection &&
-                TeredoAdapterExists &&
-                TeredoAdapterEnabled &&
-                NATType == "开放" &&
-                XboxNetworkingServiceReachable;
+            public bool IsHealthy => HasInternetConnection && TeredoAdapterExists && TeredoAdapterEnabled &&
+                                   NATType == "开放" && XboxNetworkingServiceReachable;
         }
 
-        public class ServerTestResult
+        private void Step1_NetworkCheck(BackgroundWorker worker, CombinedDiagnosticResult combinedResult)
         {
-            public string ServerName { get; set; } = string.Empty;
-            public string Address { get; set; } = string.Empty;
-            public int Port { get; set; } = 3544; // Teredo默认端口
-            public bool IsReachable { get; set; }
-            public long? PingLatency { get; set; } // ms
-            public long? TcpLatency { get; set; } // ms
-            public string Status { get; set; } = "未测试";
-            public string ErrorMessage { get; set; } = string.Empty;
-        }
-
-        public class XboxServerInfo
-        {
-            public string ServerName { get; set; } = string.Empty;
-            public string Host { get; set; } = string.Empty;
-            public int Port { get; set; } = 443;
-            public bool Required { get; set; } = true;
-        }
-        #endregion
-
-        #region 网络诊断方法
-        private void StartNetworkDiagnosis()
-        {
-            Logs.LogInfo("开始网络诊断...");
-
-            if (networkDiagnosisWorker == null)
-            {
-                networkDiagnosisWorker = new System.ComponentModel.BackgroundWorker
-                {
-                    WorkerReportsProgress = true,
-                    WorkerSupportsCancellation = true
-                };
-
-                networkDiagnosisWorker.DoWork += NetworkDiagnosisWorker_DoWork;
-                networkDiagnosisWorker.ProgressChanged += NetworkDiagnosisWorker_ProgressChanged;
-                networkDiagnosisWorker.RunWorkerCompleted += NetworkDiagnosisWorker_RunWorkerCompleted;
-            }
-
-            if (!networkDiagnosisWorker.IsBusy)
-            {
-                // 重置进度条
-                if (progressBar != null && progressBar.InvokeRequired)
-                {
-                    progressBar.Invoke(new Action(() =>
-                    {
-                        progressBar.Value = 0;
-                        progressBar.Maximum = 100;
-                    }));
-                }
-
-                networkDiagnosisWorker.RunWorkerAsync();
-                Logs.LogInfo("网络诊断后台工作器已启动");
-            }
-            else
-            {
-                Logs.LogInfo("网络诊断后台工作器正在运行中");
-            }
-        }
-
-        private void NetworkDiagnosisWorker_DoWork(object? sender, System.ComponentModel.DoWorkEventArgs e)
-        {
-            var worker = sender as System.ComponentModel.BackgroundWorker;
+            Logs.LogInfo("执行第一步：网络连接检查");
             var result = new NetworkDiagnosticResult();
+            combinedResult.Step1Result = result;
 
             try
             {
-                Logs.LogInfo("开始执行网络诊断工作流程");
-
-                // 步骤1: 检查基本网络连接 (5%)
-                worker?.ReportProgress(5, "检查互联网连接...");
+                // 1. 检查基本网络连接
+                worker.ReportProgress(5, new ProgressData { Step = 1, Message = "检查互联网连接..." });
                 result.HasInternetConnection = CheckInternetConnectivity();
 
                 if (!result.HasInternetConnection)
                 {
-                    Logs.LogInfo("无法连接到互联网");
-                    result.Issues.Add("无法连接到互联网");
-                    e.Result = result;
+                    combinedResult.AddIssue("无法连接到互联网", "请检查网络连接");
+                    combinedResult.AddSuggestion("检查网络连接是否正常");
                     return;
                 }
 
-                // 步骤2: 扫描网络适配器 (10%)
-                worker?.ReportProgress(10, "扫描网络适配器...");
-                ScanNetworkAdapters(result, worker);
+                // 2. 扫描网络适配器
+                worker.ReportProgress(10, new ProgressData { Step = 1, Message = "扫描网络适配器..." });
+                ScanNetworkAdapters(result, combinedResult);
 
-                // 步骤3: 检查Teredo适配器状态 (20%)
-                worker?.ReportProgress(20, "检查Teredo适配器...");
-                CheckTeredoAdapter(result, worker);
+                // 3. 检查Teredo适配器
+                worker.ReportProgress(15, new ProgressData { Step = 1, Message = "检查Teredo适配器..." });
+                CheckTeredoAdapter(result, combinedResult);
 
-                // 步骤4: 检查NAT类型 (30%)
-                worker?.ReportProgress(30, "检测NAT类型...");
-                CheckNATType(result, worker);
+                // 4. 检查NAT类型
+                worker.ReportProgress(20, new ProgressData { Step = 1, Message = "检测NAT类型..." });
+                CheckNATType(result, combinedResult);
 
-                // 步骤5: 读取JSON配置文件 (35%)
-                worker?.ReportProgress(35, "读取服务器配置...");
-                var serverConfig = ReadServerConfig();
+                // 5. 测试服务器连接
+                worker.ReportProgress(25, new ProgressData { Step = 1, Message = "测试服务器连接..." });
+                TestAllServers(worker, result, combinedResult);
 
-                if (serverConfig != null)
-                {
-                    // 步骤6: 测试Teredo服务器连接 (50%)
-                    worker?.ReportProgress(50, "测试Teredo服务器...");
-                    TestTeredoServers(result, serverConfig, worker);
+                // 6. 检查Xbox服务
+                worker.ReportProgress(30, new ProgressData { Step = 1, Message = "测试Xbox网络服务..." });
+                CheckXboxNetworkingServices(result, combinedResult);
 
-                    // 步骤7: 测试游戏服务器连接 (70%)
-                    worker?.ReportProgress(70, "测试游戏服务器...");
-                    TestGameServers(result, serverConfig, worker);
-                }
-
-                // 步骤8: 检查Xbox网络服务连接性 (85%)
-                worker?.ReportProgress(85, "测试Xbox网络服务...");
-                CheckXboxNetworkingServices(result, worker);
-
-                // 步骤9: 生成报告 (100%)
-                worker?.ReportProgress(100, "生成诊断报告...");
-                GenerateDiagnosisSummary(result);
-
-                Logs.LogInfo($"网络诊断完成: {(result.IsNetworkHealthy ? "网络状态良好" : "发现问题")}");
-                e.Result = result;
+                Logs.LogInfo($"第一步完成: {(result.IsHealthy ? "网络状态良好" : "发现问题")}");
             }
             catch (Exception ex)
             {
-                string errorMsg = $"诊断过程中发生错误: {ex.Message}";
-                Logs.LogInfo(errorMsg);
-                result.Issues.Add(errorMsg);
-                result.Summary = "诊断失败";
-                e.Result = result;
+                Logs.LogInfo($"第一步执行错误: {ex.Message}");
+                combinedResult.AddIssue("网络检查过程异常", ex.Message);
             }
         }
 
-        private void NetworkDiagnosisWorker_ProgressChanged(object? sender, System.ComponentModel.ProgressChangedEventArgs e)
-        {
-            if (progressBar != null)
-            {
-                if (progressBar.InvokeRequired)
-                {
-                    progressBar.Invoke(new Action(() =>
-                    {
-                        progressBar.Value = e.ProgressPercentage;
-                    }));
-                }
-                else
-                {
-                    progressBar.Value = e.ProgressPercentage;
-                }
-            }
-        }
+        #region 网络检查核心方法
 
-        private void NetworkDiagnosisWorker_RunWorkerCompleted(object? sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
-        {
-            if (e.Error != null)
-            {
-                Logs.LogInfo($"网络诊断工作器执行出错: {e.Error.Message}");
-                return;
-            }
-
-            if (e.Result is NetworkDiagnosticResult result)
-            {
-                Logs.LogInfo("开始处理网络诊断结果");
-                ProcessDiagnosisResult(result);
-            }
-        }
-        #endregion
-
-        #region 网络诊断核心方法
         private bool CheckInternetConnectivity()
         {
             try
@@ -229,7 +105,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             }
         }
 
-        private void ScanNetworkAdapters(NetworkDiagnosticResult result, System.ComponentModel.BackgroundWorker? worker)
+        private void ScanNetworkAdapters(NetworkDiagnosticResult result, CombinedDiagnosticResult combinedResult)
         {
             try
             {
@@ -259,32 +135,34 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 if (!foundTeredo)
                 {
                     Logs.LogInfo("未找到Teredo隧道适配器");
-                    result.Issues.Add("未找到Teredo隧道适配器");
+                    combinedResult.AddIssue("未找到Teredo隧道适配器", "Teredo适配器是Xbox联机必需的");
+                    combinedResult.AddSuggestion("启用Teredo适配器: netsh interface teredo set state client");
                 }
             }
             catch (Exception ex)
             {
                 string errorMsg = $"扫描网络适配器时出错: {ex.Message}";
                 Logs.LogInfo(errorMsg);
-                result.Issues.Add(errorMsg);
+                combinedResult.AddIssue("扫描网络适配器失败", ex.Message);
             }
         }
 
-        private void CheckTeredoAdapter(NetworkDiagnosticResult result, System.ComponentModel.BackgroundWorker? worker)
+        private void CheckTeredoAdapter(NetworkDiagnosticResult result, CombinedDiagnosticResult combinedResult)
         {
             try
             {
                 Logs.LogInfo("开始检查Teredo适配器...");
                 // 方法1: 检查注册表中的Teredo设置
-                CheckTeredoInRegistry(result);
+                CheckTeredoInRegistry(result, combinedResult);
 
                 // 方法2: 通过netsh命令检查Teredo状态
-                CheckTeredoViaNetsh(result);
+                CheckTeredoViaNetsh(result, combinedResult);
 
                 if (!result.TeredoAdapterEnabled)
                 {
                     Logs.LogInfo("Teredo适配器未启用或被禁用");
-                    result.Issues.Add("Teredo适配器未启用或被禁用");
+                    combinedResult.AddIssue("Teredo适配器未启用或被禁用", "Teredo适配器是Xbox联机必需的");
+                    combinedResult.AddSuggestion("以管理员身份运行: netsh interface teredo set state client");
                 }
                 else
                 {
@@ -295,11 +173,11 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             {
                 string errorMsg = $"检查Teredo适配器时出错: {ex.Message}";
                 Logs.LogInfo(errorMsg);
-                result.Issues.Add(errorMsg);
+                combinedResult.AddIssue("检查Teredo适配器失败", ex.Message);
             }
         }
 
-        private void CheckTeredoInRegistry(NetworkDiagnosticResult result)
+        private void CheckTeredoInRegistry(NetworkDiagnosticResult result, CombinedDiagnosticResult combinedResult)
         {
             try
             {
@@ -343,7 +221,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             }
         }
 
-        private void CheckTeredoViaNetsh(NetworkDiagnosticResult result)
+        private void CheckTeredoViaNetsh(NetworkDiagnosticResult result, CombinedDiagnosticResult combinedResult)
         {
             try
             {
@@ -407,7 +285,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             }
         }
 
-        private void CheckNATType(NetworkDiagnosticResult result, System.ComponentModel.BackgroundWorker? worker)
+        private void CheckNATType(NetworkDiagnosticResult result, CombinedDiagnosticResult combinedResult)
         {
             try
             {
@@ -463,14 +341,19 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 {
                     string warningMsg = $"NAT类型为{result.NATType}，可能导致联机问题";
                     Logs.LogInfo(warningMsg);
-                    result.Issues.Add(warningMsg);
+                    combinedResult.AddIssue(warningMsg, "NAT类型会影响P2P连接");
+
+                    if (result.NATType == "严格")
+                    {
+                        combinedResult.AddSuggestion("在路由器中启用UPnP或设置端口转发");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 string errorMsg = $"检测NAT类型时出错: {ex.Message}";
                 Logs.LogInfo(errorMsg);
-                result.Issues.Add(errorMsg);
+                combinedResult.AddIssue("检测NAT类型失败", ex.Message);
             }
         }
 
@@ -527,6 +410,39 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             }
         }
 
+        private void TestAllServers(BackgroundWorker worker, NetworkDiagnosticResult result, CombinedDiagnosticResult combinedResult)
+        {
+            try
+            {
+                Logs.LogInfo("开始测试所有服务器连接...");
+
+                // 读取JSON配置文件
+                worker.ReportProgress(25, new ProgressData { Step = 1, Message = "读取服务器配置..." });
+                var serverConfig = ReadServerConfig();
+
+                if (serverConfig != null)
+                {
+                    // 测试Teredo服务器连接
+                    worker.ReportProgress(30, new ProgressData { Step = 1, Message = "测试Teredo服务器..." });
+                    TestTeredoServers(result, serverConfig, combinedResult);
+
+                    // 测试游戏服务器连接
+                    worker.ReportProgress(35, new ProgressData { Step = 1, Message = "测试游戏服务器..." });
+                    TestGameServers(result, serverConfig, combinedResult);
+                }
+                else
+                {
+                    Logs.LogInfo("未找到服务器配置文件");
+                    combinedResult.AddIssue("未找到服务器配置文件", "无法测试服务器连接");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.LogInfo($"测试服务器连接时出错: {ex.Message}");
+                combinedResult.AddIssue("测试服务器连接失败", ex.Message);
+            }
+        }
+
         private JObject? ReadServerConfig()
         {
             try
@@ -558,7 +474,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             }
         }
 
-        private void TestTeredoServers(NetworkDiagnosticResult result, JObject config, System.ComponentModel.BackgroundWorker? worker)
+        private void TestTeredoServers(NetworkDiagnosticResult result, JObject config, CombinedDiagnosticResult combinedResult)
         {
             try
             {
@@ -570,8 +486,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 }
 
                 Logs.LogInfo($"开始测试 {teredoServers.Count} 个Teredo服务器...");
-                int totalServers = teredoServers.Count;
-                int completed = 0;
+                int successfulConnections = 0;
 
                 foreach (var server in teredoServers)
                 {
@@ -581,9 +496,10 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                     var testResult = TestServerWithPingAndTcp(serverAddress, 3544, "Teredo服务器");
                     result.TeredoServerResults.Add(testResult);
 
-                    completed++;
-                    int progress = 50 + (int)((completed / (double)totalServers) * 20);
-                    worker?.ReportProgress(progress, $"测试Teredo服务器 {completed}/{totalServers}...");
+                    if (testResult.IsReachable)
+                    {
+                        successfulConnections++;
+                    }
                 }
 
                 // 找出延迟最低的Teredo服务器
@@ -596,19 +512,26 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 {
                     result.FastestTeredoServer = reachableServers.First();
                     Logs.LogInfo($"最快的Teredo服务器: {result.FastestTeredoServer.Address} (延迟: {result.FastestTeredoServer.PingLatency}ms)");
+
+                    if (reachableServers.Count < teredoServers.Count)
+                    {
+                        combinedResult.AddSuggestion($"使用延迟最低的Teredo服务器: {result.FastestTeredoServer.Address}");
+                    }
                 }
                 else
                 {
                     Logs.LogInfo("没有可用的Teredo服务器");
+                    combinedResult.AddIssue("所有Teredo服务器连接失败", "无法连接到任何Teredo服务器");
                 }
             }
             catch (Exception ex)
             {
                 Logs.LogInfo($"测试Teredo服务器时出错: {ex.Message}");
+                combinedResult.AddIssue("测试Teredo服务器失败", ex.Message);
             }
         }
 
-        private void TestGameServers(NetworkDiagnosticResult result, JObject config, System.ComponentModel.BackgroundWorker? worker)
+        private void TestGameServers(NetworkDiagnosticResult result, JObject config, CombinedDiagnosticResult combinedResult)
         {
             try
             {
@@ -620,8 +543,6 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 }
 
                 Logs.LogInfo($"开始测试 {serverInfoDict.Count} 个游戏服务器...");
-                int totalServers = serverInfoDict.Count;
-                int completed = 0;
 
                 foreach (var server in serverInfoDict)
                 {
@@ -632,10 +553,6 @@ namespace test.src.UI.Forms.FH4.MedicalForm
 
                     var testResult = TestServerWithPingAndTcp(serverAddress, 443, serverName);
                     result.GameServerResults.Add(testResult);
-
-                    completed++;
-                    int progress = 70 + (int)((completed / (double)totalServers) * 15);
-                    worker?.ReportProgress(progress, $"测试游戏服务器 {completed}/{totalServers}...");
                 }
 
                 // 找出延迟最低的游戏服务器
@@ -657,6 +574,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             catch (Exception ex)
             {
                 Logs.LogInfo($"测试游戏服务器时出错: {ex.Message}");
+                combinedResult.AddIssue("测试游戏服务器失败", ex.Message);
             }
         }
 
@@ -732,7 +650,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             return result;
         }
 
-        private void CheckXboxNetworkingServices(NetworkDiagnosticResult result, System.ComponentModel.BackgroundWorker? worker)
+        private void CheckXboxNetworkingServices(NetworkDiagnosticResult result, CombinedDiagnosticResult combinedResult)
         {
             var xboxServers = new List<XboxServerInfo>
             {
@@ -757,7 +675,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 {
                     string errorMsg = $"{server.ServerName}({server.Host}:{server.Port}) 连接失败";
                     Logs.LogInfo(errorMsg);
-                    result.Issues.Add(errorMsg);
+                    combinedResult.AddIssue(errorMsg, "无法连接到Xbox服务");
                 }
             }
 
@@ -767,7 +685,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             if (!result.XboxNetworkingServiceReachable)
             {
                 Logs.LogInfo("Xbox网络服务连接不稳定");
-                result.Issues.Add("Xbox网络服务连接不稳定");
+                combinedResult.AddIssue("Xbox网络服务连接不稳定", "可能导致无法登录Xbox Live");
             }
         }
 
@@ -799,202 +717,16 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             }
         }
 
-        private void GenerateDiagnosisSummary(NetworkDiagnosticResult result)
+        public class XboxServerInfo
         {
-            Logs.LogInfo("生成诊断报告摘要...");
-            var summary = new StringBuilder();
-
-            if (result.IsNetworkHealthy)
-            {
-                summary.AppendLine("✅ 网络诊断完成 - 网络状态良好");
-                summary.AppendLine($"• 互联网连接: {(result.HasInternetConnection ? "正常" : "异常")}");
-                summary.AppendLine($"• Teredo适配器: {result.TeredoAdapterStatus}");
-                summary.AppendLine($"• NAT类型: {result.NATType}");
-                summary.AppendLine($"• Xbox服务: {(result.XboxNetworkingServiceReachable ? "可访问" : "不可访问")}");
-                Logs.LogInfo("网络状态良好");
-            }
-            else
-            {
-                summary.AppendLine("⚠️ 网络诊断完成 - 发现问题");
-
-                foreach (var issue in result.Issues)
-                {
-                    summary.AppendLine($"• {issue}");
-                }
-
-                if (result.Issues.Count == 0)
-                {
-                    summary.AppendLine("• 未发现具体问题，但网络状态不理想");
-                }
-
-                Logs.LogInfo($"发现{result.Issues.Count}个网络问题");
-            }
-
-            result.Summary = summary.ToString();
+            public string ServerName { get; set; } = string.Empty;
+            public string Host { get; set; } = string.Empty;
+            public int Port { get; set; } = 443;
+            public bool Required { get; set; } = true;
         }
+
         #endregion
 
-        #region 公共方法和属性
-        public void StartNetworkCheck()
-        {
-            Logs.LogInfo("用户启动网络检查");
-            StartNetworkDiagnosis();
-        }
-
-        public void CancelNetworkCheck()
-        {
-            if (networkDiagnosisWorker != null && networkDiagnosisWorker.IsBusy)
-            {
-                Logs.LogInfo("用户取消网络检查");
-                networkDiagnosisWorker.CancelAsync();
-            }
-        }
-
-        // 将字段标记为可为null
-        private System.ComponentModel.BackgroundWorker? networkDiagnosisWorker;
-
-        private void ProcessDiagnosisResult(NetworkDiagnosticResult result)
-        {
-            Logs.LogInfo("处理诊断结果...");
-
-            // 生成诊断报告文件
-            string reportPath = GenerateDiagnosisReport(result);
-
-            // 自动打开报告文件
-            if (!string.IsNullOrEmpty(reportPath) && File.Exists(reportPath))
-            {
-                try
-                {
-                    Process.Start(new ProcessStartInfo(reportPath) { UseShellExecute = true });
-                    Logs.LogInfo($"已打开诊断报告: {reportPath}");
-                }
-                catch (Exception ex)
-                {
-                    Logs.LogInfo($"打开诊断报告失败: {ex.Message}");
-                }
-            }
-
-            // 触发事件
-            OnDiagnosisReportGenerated?.Invoke(reportPath, result);
-        }
-
-        private string GenerateDiagnosisReport(NetworkDiagnosticResult result)
-        {
-            try
-            {
-                Logs.LogInfo("生成详细诊断报告...");
-                var report = new StringBuilder();
-                report.AppendLine($"网络诊断报告 - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                report.AppendLine("=".PadRight(50, '=') + "\n");
-
-                report.AppendLine($"诊断时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                report.AppendLine($"网络状态: {(result.IsNetworkHealthy ? "健康" : "存在问题")}\n");
-
-                report.AppendLine("基本网络状态:");
-                report.AppendLine($"• 互联网连接: {(result.HasInternetConnection ? "✓ 正常" : "✗ 异常")}");
-                report.AppendLine($"• Teredo适配器: {(result.TeredoAdapterExists ? "存在" : "不存在")}");
-                report.AppendLine($"• Teredo状态: {result.TeredoAdapterStatus}");
-                report.AppendLine($"• Teredo启用: {(result.TeredoAdapterEnabled ? "是" : "否")}");
-                report.AppendLine($"• NAT类型: {result.NATType}");
-                report.AppendLine($"• Xbox服务可达: {(result.XboxNetworkingServiceReachable ? "是" : "否")}\n");
-
-                // Teredo服务器测试结果
-                if (result.TeredoServerResults.Any())
-                {
-                    report.AppendLine("Teredo服务器连接测试结果:");
-                    foreach (var server in result.TeredoServerResults)
-                    {
-                        string statusIcon = server.IsReachable ? "✓" : "✗";
-                        report.AppendLine($"  {statusIcon} {server.Address}: {server.Status}");
-                    }
-
-                    if (result.FastestTeredoServer != null)
-                    {
-                        report.AppendLine($"  → 延迟最低的Teredo服务器: {result.FastestTeredoServer.Address} ({result.FastestTeredoServer.PingLatency}ms)\n");
-                    }
-                }
-
-                // 游戏服务器测试结果
-                if (result.GameServerResults.Any())
-                {
-                    report.AppendLine("游戏服务器连接测试结果:");
-                    foreach (var server in result.GameServerResults)
-                    {
-                        string statusIcon = server.IsReachable ? "✓" : "✗";
-                        report.AppendLine($"  {statusIcon} {server.ServerName} ({server.Address}): {server.Status}");
-                    }
-
-                    if (result.FastestGameServer != null)
-                    {
-                        report.AppendLine($"  → 延迟最低的游戏服务器: {result.FastestGameServer.ServerName} - {result.FastestGameServer.Address} ({result.FastestGameServer.PingLatency}ms)\n");
-                    }
-                }
-
-                if (result.Issues.Count > 0)
-                {
-                    report.AppendLine("发现的问题:");
-                    foreach (var issue in result.Issues)
-                    {
-                        report.AppendLine($"• {issue}");
-                    }
-                    report.AppendLine();
-                }
-
-                report.AppendLine("建议:");
-                if (result.IsNetworkHealthy)
-                {
-                    report.AppendLine("• 网络配置正常，可以正常进行联机游戏");
-                }
-                else
-                {
-                    if (!result.TeredoAdapterExists || !result.TeredoAdapterEnabled)
-                    {
-                        report.AppendLine("• 建议启用Teredo隧道适配器");
-                        report.AppendLine("• 运行管理员模式的命令提示符，执行: netsh interface teredo set state client");
-                    }
-
-                    if (result.NATType != "开放")
-                    {
-                        report.AppendLine("• 建议配置路由器开启UPnP或设置端口转发");
-                        report.AppendLine("• 需要转发端口: UDP 3074, 3544, 4500");
-                    }
-
-                    if (!result.XboxNetworkingServiceReachable)
-                    {
-                        report.AppendLine("• 检查防火墙设置，确保Xbox相关服务未被阻止");
-                        report.AppendLine("• 在Windows防火墙中允许Xbox Live网络服务");
-                    }
-
-                    if (result.FastestTeredoServer != null)
-                    {
-                        report.AppendLine($"• 建议使用延迟最低的Teredo服务器: {result.FastestTeredoServer.Address}");
-                    }
-
-                    if (result.FastestGameServer != null)
-                    {
-                        report.AppendLine($"• 建议使用延迟最低的游戏服务器: {result.FastestGameServer.ServerName} ({result.FastestGameServer.Address})");
-                    }
-                }
-
-                // 保存报告到文件
-                string fileName = $"NetworkDiagnosis_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
-                string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), fileName);
-
-                File.WriteAllText(filePath, report.ToString(), Encoding.UTF8);
-                Logs.LogInfo($"诊断报告已保存到: {filePath}");
-
-                return filePath;
-            }
-            catch (Exception ex)
-            {
-                Logs.LogInfo($"保存诊断报告时出错: {ex.Message}");
-                return string.Empty;
-            }
-        }
-
-        // 将事件标记为可为null
-        public delegate void DiagnosisReportHandler(string reportPath, NetworkDiagnosticResult result);
-        public event DiagnosisReportHandler? OnDiagnosisReportGenerated;
         #endregion
     }
 }
