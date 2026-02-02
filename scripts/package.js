@@ -9,7 +9,8 @@ const version = packageJson.version;
 // 目录配置
 const sourceDir = 'bin/Release/net8.0-windows';
 const releaseDir = 'release';
-const zipName = `horizon-repair-tool-${version}.zip`;
+// const zipName = `horizon-repair-tool-${version}.zip`;
+const zipName = `horizon-repair-tool.zip`;
 
 // 1. 清理旧版本文件
 console.log('🧹 清理旧版本文件...');
