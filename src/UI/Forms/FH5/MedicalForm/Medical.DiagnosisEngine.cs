@@ -287,8 +287,7 @@ namespace test.src.UI.Forms.FH5.MedicalForm
 
         private void ProcessCompleteDiagnosisResult(string reportPath, CombinedDiagnosticResult result)
         {
-            // 自动打开报告文件 - 已禁用，改为UI显示
-            /*
+            // 自动打开报告文件
             if (!string.IsNullOrEmpty(reportPath) && File.Exists(reportPath))
             {
                 try
@@ -304,7 +303,6 @@ namespace test.src.UI.Forms.FH5.MedicalForm
                     Logs.LogInfo($"打开诊断报告失败: {ex.Message}");
                 }
             }
-            */
 
             // 触发事件
             OnDiagnosisReportGenerated?.Invoke(reportPath, result);

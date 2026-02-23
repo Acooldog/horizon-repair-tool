@@ -173,48 +173,67 @@ namespace test.src.UI.Forms.FH4.MedicalForm
 
         private void ShowReportUI(CombinedDiagnosticResult result)
         {
-            tableLayoutPanel1.Visible = false;
-            pnlReport.Visible = true;
+            // 确保 pnlReport 是可见的并置于顶层
+            if (pnlReport == null) InitializeReportUI();
+
+            pnlReport!.Visible = true;
             pnlReport.BringToFront();
 
-            // Ensure pnlReport bounds match tableLayoutPanel1 if not docked
-            pnlReport.Bounds = tableLayoutPanel1.Bounds;
+            // 隐藏原来的布局
+            if (tableLayoutPanel1 != null)
+                tableLayoutPanel1.Visible = false;
 
+            // 填充数据
             PopulateReportList(result);
         }
 
         private void PopulateReportList(CombinedDiagnosticResult result)
         {
-            flowPanelResults.Controls.Clear();
+            if (flowPanelResults == null) return;
+
             flowPanelResults.SuspendLayout();
+            flowPanelResults.Controls.Clear();
+
+            // 调试日志
+            Logs.LogInfo($"PopulateReportList: TotalIssues={result.TotalIssues}, AllStepsSuccessful={result.AllStepsSuccessful}");
 
             if (result.AllStepsSuccessful)
             {
                 Label lblSuccess = new Label();
                 lblSuccess.Text = "🎉 恭喜！未发现网络问题。";
-                lblSuccess.Font = new Font("Microsoft YaHei UI", 14F, FontStyle.Bold);
-                lblSuccess.ForeColor = UIStyleHelper.SuccessColor;
+                lblSuccess.Font = new Font("Microsoft YaHei UI", 12F, FontStyle.Bold);
+                lblSuccess.ForeColor = Color.Green; // 确保颜色可见
                 lblSuccess.AutoSize = true;
                 lblSuccess.Padding = new Padding(20);
+                lblSuccess.Margin = new Padding(10);
                 flowPanelResults.Controls.Add(lblSuccess);
-                btnOneClickRepair.Visible = false;
+
+                if (btnOneClickRepair != null)
+                    btnOneClickRepair.Visible = false;
             }
             else
             {
-                btnOneClickRepair.Visible = true;
+                if (btnOneClickRepair != null)
+                    btnOneClickRepair.Visible = true;
+
                 foreach (var issue in result.AllIssues)
                 {
+                    Logs.LogInfo($"Adding issue to UI: {issue.Description}");
+
                     var itemControl = new DiagnosticItemControl(
                         issue.Description,
                         issue.Details,
                         issue.RepairAction
                     );
-                    itemControl.Width = flowPanelResults.ClientSize.Width - 30; // Adjust width
+                    // 设置宽度
+                    itemControl.Width = flowPanelResults.ClientSize.Width - 30;
+                    itemControl.Anchor = AnchorStyles.Left | AnchorStyles.Right; // 尝试使用Anchor
                     flowPanelResults.Controls.Add(itemControl);
                 }
             }
 
             flowPanelResults.ResumeLayout();
+            flowPanelResults.PerformLayout(); // 强制刷新布局
         }
 
         private async void BtnOneClickRepair_Click(object? sender, EventArgs e)
