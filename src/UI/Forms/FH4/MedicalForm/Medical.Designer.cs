@@ -171,7 +171,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(308, 450);
+            ClientSize = new Size(600, 500); // 增加默认窗体大小
             Controls.Add(tableLayoutPanel1);
             Name = "Medical";
             Text = "Medical";

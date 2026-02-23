@@ -96,21 +96,9 @@ namespace test.src.UI.Forms.FH5.MedicalForm
         {
             // Create pnlReport covering the same area as tableLayoutPanel1
             pnlReport = new Panel();
-            // We need to place it where tableLayoutPanel1 is.
-            // Assuming tableLayoutPanel1 is docked or anchored.
-            pnlReport.Location = tableLayoutPanel1.Location;
-            pnlReport.Size = tableLayoutPanel1.Size;
-            pnlReport.Anchor = tableLayoutPanel1.Anchor;
-            // Or better, just Dock Fill inside the parent container if applicable.
-            // But tableLayoutPanel1 seems to be the main content.
-            // Let's just set it to Dock.Fill of the form, but below the title bar area if any.
-            // Actually, tableLayoutPanel1 seems to be below a progress bar.
-
-            // Let's assume we can just hide tableLayoutPanel1 and show pnlReport in its place.
-            // We'll add pnlReport to the same parent.
-            pnlReport.Dock = tableLayoutPanel1.Dock;
+            pnlReport.Dock = DockStyle.Fill; // 覆盖整个窗体
             pnlReport.Visible = false;
-            pnlReport.BackColor = Color.Transparent;
+            pnlReport.BackColor = SystemColors.Control;
 
             // Create One Click Repair Button at bottom
             btnOneClickRepair = new Button();
@@ -127,11 +115,21 @@ namespace test.src.UI.Forms.FH5.MedicalForm
             // Create FlowLayoutPanel
             flowPanelResults = new FlowLayoutPanel();
             flowPanelResults.Dock = DockStyle.Fill;
-            flowPanelResults.AutoScroll = true;
+            flowPanelResults.AutoScroll = true; // 启用滚动条
             flowPanelResults.FlowDirection = FlowDirection.TopDown;
-            flowPanelResults.WrapContents = false;
-            flowPanelResults.BackColor = Color.Transparent;
+            flowPanelResults.WrapContents = false; // 垂直堆叠，不换行
+            flowPanelResults.BackColor = SystemColors.Control;
             flowPanelResults.Padding = new Padding(10);
+
+            // 重要：处理 resize 以调整子控件宽度
+            flowPanelResults.SizeChanged += (s, e) =>
+            {
+                foreach (Control ctrl in flowPanelResults.Controls)
+                {
+                    // 减去滚动条宽度和padding
+                    ctrl.Width = flowPanelResults.ClientSize.Width - 25;
+                }
+            };
 
             pnlReport.Controls.Add(flowPanelResults);
             pnlReport.Controls.Add(btnOneClickRepair);

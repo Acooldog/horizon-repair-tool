@@ -96,13 +96,11 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         {
             // Create pnlReport covering the same area as tableLayoutPanel1
             pnlReport = new Panel();
-            pnlReport.Dock = tableLayoutPanel1.Dock;
+            pnlReport.Dock = DockStyle.Fill; // 覆盖整个窗体
             pnlReport.Visible = false;
-            pnlReport.BackColor = Color.Transparent;
-
-            // Adjust location/size if needed based on tableLayoutPanel1
-            // But since we can't easily see properties, Dock=Fill on parent or same bounds is best.
-            // Assuming tableLayoutPanel1 is docked or anchored.
+            pnlReport.BackColor = Color.White; // 确保有背景色，防止透明导致看起来“白了”或透视
+            // 或者使用 Control 颜色
+            pnlReport.BackColor = SystemColors.Control;
 
             // Create One Click Repair Button at bottom
             btnOneClickRepair = new Button();
@@ -119,11 +117,21 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             // Create FlowLayoutPanel
             flowPanelResults = new FlowLayoutPanel();
             flowPanelResults.Dock = DockStyle.Fill;
-            flowPanelResults.AutoScroll = true;
+            flowPanelResults.AutoScroll = true; // 启用滚动条
             flowPanelResults.FlowDirection = FlowDirection.TopDown;
-            flowPanelResults.WrapContents = false;
-            flowPanelResults.BackColor = Color.Transparent;
+            flowPanelResults.WrapContents = false; // 垂直堆叠，不换行
+            flowPanelResults.BackColor = SystemColors.Control;
             flowPanelResults.Padding = new Padding(10);
+
+            // 重要：处理 resize 以调整子控件宽度
+            flowPanelResults.SizeChanged += (s, e) =>
+            {
+                foreach (Control ctrl in flowPanelResults.Controls)
+                {
+                    // 减去滚动条宽度和padding
+                    ctrl.Width = flowPanelResults.ClientSize.Width - 25;
+                }
+            };
 
             pnlReport.Controls.Add(flowPanelResults);
             pnlReport.Controls.Add(btnOneClickRepair);
