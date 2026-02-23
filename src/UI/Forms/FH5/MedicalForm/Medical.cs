@@ -158,87 +158,24 @@ namespace test.src.UI.Forms.FH5.MedicalForm
             }
 
             // 使用FadeIn淡入效果
-            // this.FadeIn(300).Wait(); // .Wait() 在 UI 线程会导致死锁，改为 async/await
-            await Task.Delay(300); // 简单的延迟，或者使用正确的异步 FadeIn 如果支持
+            await Task.Delay(300);
 
-            if (result.AllStepsSuccessful)
-            {
-                //MessageBox.Show("网络诊断完成，所有检查通过！\n报告已保存到桌面。",
-                //    "诊断完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                // Also show report UI but empty or with success message
-                ShowReportUI(result);
-            }
-            else
-            {
-                // Switch to Report View
-                ShowReportUI(result);
-            }
+            // 显示新的独立诊断报告窗口
+            var reportForm = new MedicalReportForm(reportPath, result);
+            reportForm.Show();
+
+            // 可以选择关闭或隐藏当前窗口，或者保持打开
+            // this.Close(); 
         }
 
         private void ShowReportUI(CombinedDiagnosticResult result)
         {
-            // 确保 pnlReport 是可见的并置于顶层
-            if (pnlReport == null) InitializeReportUI();
-
-            pnlReport!.Visible = true;
-            pnlReport.BringToFront();
-
-            // 隐藏原来的布局
-            if (tableLayoutPanel1 != null)
-                tableLayoutPanel1.Visible = false;
-
-            // 填充数据
-            PopulateReportList(result);
+            // 旧的 Report UI 逻辑已弃用，保留为空或删除
         }
 
         private void PopulateReportList(CombinedDiagnosticResult result)
         {
-            if (flowPanelResults == null) return;
-
-            flowPanelResults.SuspendLayout();
-            flowPanelResults.Controls.Clear();
-
-            // 调试日志
-            Logs.LogInfo($"PopulateReportList: TotalIssues={result.TotalIssues}, AllStepsSuccessful={result.AllStepsSuccessful}");
-
-            if (result.AllStepsSuccessful)
-            {
-                Label lblSuccess = new Label();
-                lblSuccess.Text = "🎉 恭喜！未发现网络问题。";
-                lblSuccess.Font = new Font("Microsoft YaHei UI", 12F, FontStyle.Bold);
-                lblSuccess.ForeColor = Color.Green; // 确保颜色可见
-                lblSuccess.AutoSize = true;
-                lblSuccess.Padding = new Padding(20);
-                lblSuccess.Margin = new Padding(10);
-                flowPanelResults.Controls.Add(lblSuccess);
-
-                if (btnOneClickRepair != null)
-                    btnOneClickRepair.Visible = false;
-            }
-            else
-            {
-                if (btnOneClickRepair != null)
-                    btnOneClickRepair.Visible = true;
-
-                foreach (var issue in result.AllIssues)
-                {
-                    Logs.LogInfo($"Adding issue to UI: {issue.Description}");
-
-                    var itemControl = new DiagnosticItemControl(
-                        issue.Description,
-                        issue.Details,
-                        issue.RepairAction
-                    );
-                    // 设置宽度
-                    itemControl.Width = flowPanelResults.ClientSize.Width - 30;
-                    itemControl.Anchor = AnchorStyles.Left | AnchorStyles.Right; // 尝试使用Anchor
-                    flowPanelResults.Controls.Add(itemControl);
-                    itemControl.PerformLayout(); // Force layout update
-                }
-            }
-
-            flowPanelResults.ResumeLayout();
-            flowPanelResults.PerformLayout(); // 强制刷新布局
+            // 旧的 Report UI 逻辑已弃用，保留为空或删除
         }
 
         private async void BtnOneClickRepair_Click(object? sender, EventArgs e)
