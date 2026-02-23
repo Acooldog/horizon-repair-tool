@@ -50,7 +50,7 @@ namespace test.src.UI.Forms.FH5.MedicalForm
                 CheckLocalCredentials(result, combinedResult);
 
                 result.IsXboxServiceHealthy = result.XboxLiveCoreStatus == "在线" &&
-                                             result.LocalCredentialsStatus == "有效";
+                                             result.LocalCredentialsStatus == "存在凭据文件";
                 Logs.LogInfo($"第三步完成: Xbox服务{(result.IsXboxServiceHealthy ? "正常" : "异常")}");
             }
             catch (Exception ex)
