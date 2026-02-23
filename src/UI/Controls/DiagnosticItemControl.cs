@@ -60,7 +60,7 @@ namespace test.src.UI.Controls
             this.pnlContainer.Dock = DockStyle.Top;
             this.pnlContainer.AutoSize = true;
             this.pnlContainer.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            this.pnlContainer.BackColor = UIStyleHelper.CardBackgroundColor;
+            this.pnlContainer.BackColor = Color.White; // 显式使用白色背景
             this.pnlContainer.Padding = new Padding(10);
             this.pnlContainer.Paint += PnlContainer_Paint;
 
@@ -94,7 +94,7 @@ namespace test.src.UI.Controls
             // 
             this.lblTitle.AutoSize = true;
             this.lblTitle.Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold);
-            this.lblTitle.ForeColor = UIStyleHelper.TextColor;
+            this.lblTitle.ForeColor = Color.Black; // 显式使用黑色
             this.lblTitle.Text = "Issue Title";
             this.lblTitle.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             this.lblTitle.Margin = new Padding(3, 5, 3, 5);
@@ -120,7 +120,7 @@ namespace test.src.UI.Controls
             // 
             this.lblDetails.AutoSize = true;
             this.lblDetails.Font = new Font("Microsoft YaHei UI", 9F);
-            this.lblDetails.ForeColor = Color.Gray;
+            this.lblDetails.ForeColor = Color.DarkGray; // 显式使用深灰色
             this.lblDetails.Text = "Details...";
             this.lblDetails.Dock = DockStyle.Fill;
             this.lblDetails.Margin = new Padding(3, 5, 3, 10);
@@ -168,11 +168,11 @@ namespace test.src.UI.Controls
             var rect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
             using (var path = UIStyleHelper.GetRoundedPath(rect, 15))
             {
-                using (var brush = new SolidBrush(UIStyleHelper.CardBackgroundColor))
+                using (var brush = new SolidBrush(Color.White)) // 显式使用白色
                 {
                     g.FillPath(brush, path);
                 }
-                using (var pen = new Pen(Color.FromArgb(50, 50, 50)))
+                using (var pen = new Pen(Color.FromArgb(200, 200, 200))) // 浅灰色边框
                 {
                     g.DrawPath(pen, path);
                 }
@@ -189,7 +189,7 @@ namespace test.src.UI.Controls
             var rect = new Rectangle(0, 0, btn.Width, btn.Height);
 
             // Clear default background
-            g.Clear(UIStyleHelper.CardBackgroundColor); // Match container bg
+            g.Clear(Color.White); // 显式使用白色
 
             using (var path = UIStyleHelper.GetRoundedPath(rect, 8))
             {
