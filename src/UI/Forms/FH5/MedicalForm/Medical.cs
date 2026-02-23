@@ -233,6 +233,7 @@ namespace test.src.UI.Forms.FH5.MedicalForm
                     itemControl.Width = flowPanelResults.ClientSize.Width - 30;
                     itemControl.Anchor = AnchorStyles.Left | AnchorStyles.Right; // 尝试使用Anchor
                     flowPanelResults.Controls.Add(itemControl);
+                    itemControl.PerformLayout(); // Force layout update
                 }
             }
 

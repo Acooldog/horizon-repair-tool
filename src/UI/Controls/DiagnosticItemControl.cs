@@ -40,7 +40,7 @@ namespace test.src.UI.Controls
         {
             // Setup UserControl
             this.AutoSize = true;
-            this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            // this.AutoSizeMode = AutoSizeMode.GrowAndShrink; // Removed to allow width adjustment
             this.BackColor = Color.Transparent;
             this.Padding = new Padding(0, 0, 0, 10); // Bottom margin
 
