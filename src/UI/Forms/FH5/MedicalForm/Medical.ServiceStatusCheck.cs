@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 using test.src.Services.PublicFuc.Helpers;
 using test.src.Services.PublicFuc.Managers;
 
-namespace test.src.UI.Forms.FH4.MedicalForm
+namespace test.src.UI.Forms.FH5.MedicalForm
 {
     public partial class Medical
     {

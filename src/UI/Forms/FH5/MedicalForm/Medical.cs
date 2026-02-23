@@ -9,7 +9,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace test.src.UI.Forms.FH4.MedicalForm
+namespace test.src.UI.Forms.FH5.MedicalForm
 {
     public partial class Medical : Form
     {
@@ -96,13 +96,21 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         {
             // Create pnlReport covering the same area as tableLayoutPanel1
             pnlReport = new Panel();
+            // We need to place it where tableLayoutPanel1 is.
+            // Assuming tableLayoutPanel1 is docked or anchored.
+            pnlReport.Location = tableLayoutPanel1.Location;
+            pnlReport.Size = tableLayoutPanel1.Size;
+            pnlReport.Anchor = tableLayoutPanel1.Anchor;
+            // Or better, just Dock Fill inside the parent container if applicable.
+            // But tableLayoutPanel1 seems to be the main content.
+            // Let's just set it to Dock.Fill of the form, but below the title bar area if any.
+            // Actually, tableLayoutPanel1 seems to be below a progress bar.
+
+            // Let's assume we can just hide tableLayoutPanel1 and show pnlReport in its place.
+            // We'll add pnlReport to the same parent.
             pnlReport.Dock = tableLayoutPanel1.Dock;
             pnlReport.Visible = false;
             pnlReport.BackColor = Color.Transparent;
-
-            // Adjust location/size if needed based on tableLayoutPanel1
-            // But since we can't easily see properties, Dock=Fill on parent or same bounds is best.
-            // Assuming tableLayoutPanel1 is docked or anchored.
 
             // Create One Click Repair Button at bottom
             btnOneClickRepair = new Button();
@@ -136,6 +144,10 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         {
             // 绑定诊断完成事件
             this.OnDiagnosisReportGenerated += Medical_OnDiagnosisReportGenerated;
+
+            // 绑定按钮事件
+            //this.startBtn.Click += StartBtn_Click;
+            //this.cancelBtn.Click += CancelBtn_Click;
         }
 
         private async void Medical_OnDiagnosisReportGenerated(string reportPath, CombinedDiagnosticResult result)
@@ -151,9 +163,11 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             // this.FadeIn(300).Wait(); // .Wait() 在 UI 线程会导致死锁，改为 async/await
             await Task.Delay(300); // 简单的延迟，或者使用正确的异步 FadeIn 如果支持
 
-            // 确保不阻塞 UI
             if (result.AllStepsSuccessful)
             {
+                //MessageBox.Show("网络诊断完成，所有检查通过！\n报告已保存到桌面。",
+                //    "诊断完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Also show report UI but empty or with success message
                 ShowReportUI(result);
             }
             else
@@ -169,7 +183,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             pnlReport.Visible = true;
             pnlReport.BringToFront();
 
-            // Ensure pnlReport bounds match tableLayoutPanel1 if not docked
+            // Adjust layout if needed (e.g. if tableLayoutPanel1 was not Dock.Fill)
             pnlReport.Bounds = tableLayoutPanel1.Bounds;
 
             PopulateReportList(result);
@@ -215,16 +229,28 @@ namespace test.src.UI.Forms.FH4.MedicalForm
             btnOneClickRepair.Enabled = false;
             btnOneClickRepair.Text = "正在修复所有问题...";
 
+            var tasks = new List<Task>();
+
             foreach (Control ctrl in flowPanelResults.Controls)
             {
                 if (ctrl is DiagnosticItemControl item)
                 {
+                    // Start repair for each item
+                    // To avoid overwhelming system, maybe run sequentially or with limited concurrency?
+                    // User said "async operation", implying parallel is fine, but netsh commands might conflict.
+                    // Better to run sequentially to avoid race conditions on network adapters.
+
                     await item.StartRepair();
                 }
             }
 
             btnOneClickRepair.Text = "修复完成";
+            // btnOneClickRepair.Enabled = true; // Keep disabled or change to "Rescan"?
+
             MessageBox.Show("所有修复操作已执行完毕，建议重新检测以验证。", "修复完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // Trigger rescan automatically? Or let user decide.
+            // User requirement: "click repair... shows checkmark"
         }
 
         private void StartBtn_Click(object sender, EventArgs e)
@@ -305,5 +331,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 diagnosisWorker.CancelAsync();
             }
         }
+
+
     }
 }

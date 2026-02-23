@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -8,7 +8,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using test.src.Services.PublicFuc.Helpers;
 
-namespace test.src.UI.Forms.FH4.MedicalForm
+namespace test.src.UI.Forms.FH5.MedicalForm
 {
     public partial class Medical
     {

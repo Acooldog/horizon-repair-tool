@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using Microsoft.Win32;
 using test.src.Services.PublicFuc.Helpers;
 
-namespace test.src.UI.Forms.FH4.MedicalForm
+namespace test.src.UI.Forms.FH5.MedicalForm
 {
     public partial class Medical
     {

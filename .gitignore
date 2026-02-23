@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 .vscode/
 MedicalReport/
+_文档/
+.trae/

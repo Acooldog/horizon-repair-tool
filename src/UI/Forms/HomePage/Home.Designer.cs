@@ -37,6 +37,7 @@
             FH5GroupBox = new GroupBox();
             FH5Repair = new Button();
             FH5CustomRepair = new Button();
+            medicalFH5 = new Button();
             medical = new Button();
             statusStrip1.SuspendLayout();
             FH4GroupBox.SuspendLayout();
@@ -99,11 +100,12 @@
             // 
             // FH5GroupBox
             // 
+            FH5GroupBox.Controls.Add(medicalFH5);
             FH5GroupBox.Controls.Add(FH5Repair);
             FH5GroupBox.Controls.Add(FH5CustomRepair);
             FH5GroupBox.Location = new Point(158, 3);
             FH5GroupBox.Name = "FH5GroupBox";
-            FH5GroupBox.Size = new Size(142, 81);
+            FH5GroupBox.Size = new Size(142, 104);
             FH5GroupBox.TabIndex = 4;
             FH5GroupBox.TabStop = false;
             FH5GroupBox.Text = "地平线5";
@@ -127,6 +129,16 @@
             FH5CustomRepair.Text = "自定义修复";
             FH5CustomRepair.UseVisualStyleBackColor = true;
             FH5CustomRepair.Click += FH5CustomRepair_Click;
+            // 
+            // medicalFH5
+            // 
+            medicalFH5.Location = new Point(6, 75);
+            medicalFH5.Name = "medicalFH5";
+            medicalFH5.Size = new Size(126, 23);
+            medicalFH5.TabIndex = 3;
+            medicalFH5.Text = "生成诊断报告";
+            medicalFH5.UseVisualStyleBackColor = true;
+            medicalFH5.Click += medicalFH5_Click;
             // 
             // medical
             // 
@@ -167,6 +179,7 @@
         private GroupBox FH5GroupBox;
         private Button FH5Repair;
         private Button FH5CustomRepair;
+        private Button medicalFH5;
         private Button medical;
     }
 }

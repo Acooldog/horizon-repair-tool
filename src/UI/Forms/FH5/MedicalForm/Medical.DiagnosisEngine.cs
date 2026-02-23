@@ -10,7 +10,7 @@ using test.src.Services.PublicFuc.Managers;
 
 using System.Threading.Tasks;
 
-namespace test.src.UI.Forms.FH4.MedicalForm
+namespace test.src.UI.Forms.FH5.MedicalForm
 {
     public partial class Medical
     {
@@ -319,7 +319,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 Logs.LogInfo("生成完整诊断报告...");
                 var report = new StringBuilder();
 
-                report.AppendLine($"地平线4网络诊断报告 - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                report.AppendLine($"地平线5网络诊断报告 - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                 report.AppendLine("=".PadRight(60, '=') + "\n");
 
                 // 基本信息
@@ -581,11 +581,11 @@ namespace test.src.UI.Forms.FH4.MedicalForm
 
                 // 诊断结束
                 report.AppendLine("\n" + "=".PadRight(60, '='));
-                report.AppendLine("地平线4网络诊断报告 - 生成完成");
+                report.AppendLine("地平线5网络诊断报告 - 生成完成");
                 report.AppendLine($"报告生成时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
 
                 // 保存报告到文件
-                string fileName = $"FH4_Diagnosis_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                string fileName = $"FH5_Diagnosis_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                 string filePath = Path.Combine(TxtDir, fileName);
 
                 File.WriteAllText(filePath, report.ToString(), Encoding.UTF8);
@@ -610,7 +610,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                     }
 
                     string errorReport = $"诊断报告生成失败\n错误: {ex.Message}\n时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
-                    string fileName = $"FH4_Diagnosis_Error_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                    string fileName = $"FH5_Diagnosis_Error_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                     string filePath = Path.Combine(TxtDir, fileName);
                     File.WriteAllText(filePath, errorReport, Encoding.UTF8);
                     return filePath;

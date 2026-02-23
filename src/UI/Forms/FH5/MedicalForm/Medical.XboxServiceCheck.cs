@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 using test.src.Services.PublicFuc.Helpers;
 using test.src.Services.PublicFuc.Managers;
 
-namespace test.src.UI.Forms.FH4.MedicalForm
+namespace test.src.UI.Forms.FH5.MedicalForm
 {
     public partial class Medical
     {
@@ -180,6 +180,9 @@ namespace test.src.UI.Forms.FH4.MedicalForm
                 {
                     result.LocalCredentialsStatus = "存在凭据文件";
                     Logs.LogInfo("本地Xbox凭据: 存在");
+
+                    // FH5 特有提示
+                    combinedResult.AddSuggestion("请确保在地平线5中已将当前房屋设置为【家】(Home)，否则可能无法连接Horizon Life");
                 }
                 else
                 {

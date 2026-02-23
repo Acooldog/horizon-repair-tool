@@ -13,7 +13,7 @@ using Newtonsoft.Json.Linq;
 using test.src.Services.PublicFuc.Helpers;
 using test.src.Services.PublicFuc.Managers;
 
-namespace test.src.UI.Forms.FH4.MedicalForm
+namespace test.src.UI.Forms.FH5.MedicalForm
 {
     public partial class Medical
     {
@@ -478,7 +478,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         {
             try
             {
-                var teredoServers = config["FH4MedicalTeredo"]?["teredo_servers"] as JArray;
+                var teredoServers = config["FH5MedicalTeredo"]?["teredo_servers"] as JArray;
                 if (teredoServers == null || teredoServers.Count == 0)
                 {
                     Logs.LogInfo("未找到Teredo服务器配置");
@@ -535,7 +535,7 @@ namespace test.src.UI.Forms.FH4.MedicalForm
         {
             try
             {
-                var serverInfoDict = config["FH4MedicalTeredo"]?["server_info_dict"] as JObject;
+                var serverInfoDict = config["FH5MedicalTeredo"]?["server_info_dict"] as JObject;
                 if (serverInfoDict == null)
                 {
                     Logs.LogInfo("未找到游戏服务器配置");

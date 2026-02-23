@@ -1,9 +1,10 @@
 ﻿using test.src.Services.PublicFuc.Helpers;
+using test.src.UI.Forms.FH5.MedicalForm;
 
 namespace test
 {
     partial class Home
-    {   
+    {
         /// <summary>
         /// 点击FH5一键修复
         /// </summary>
@@ -24,6 +25,21 @@ namespace test
         {
             Logs.LogInfo("用户点击FH5自定义修复");
             MessageBox.Show("此功能未开放，请等待更新", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// 点击FH5 Medical功能
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void medicalFH5_Click(object sender, EventArgs e)
+        {
+            Medical medical = new Medical();
+            medical.Show();
+            medical.Activate();
+            medical.BringToFront();
+            medical.Focus();
+            Logs.LogInfo("用户选择了地平线5Medical功能");
         }
     }
 }
