@@ -9,7 +9,6 @@ namespace test.src.UI.Controls
 {
     public class DiagnosticItemControl : UserControl
     {
-        private Panel pnlContainer = null!;
         private TableLayoutPanel layoutPanel = null!;
         private Label lblTitle = null!;
         private Label lblDetails = null!;
@@ -46,23 +45,12 @@ namespace test.src.UI.Controls
             this.Padding = new Padding(0, 0, 0, 10); // Bottom margin
 
             // Initialize Controls
-            this.pnlContainer = new Panel();
             this.layoutPanel = new TableLayoutPanel();
             this.lblTitle = new Label();
             this.lblDetails = new Label();
             this.btnRepair = new Button();
             this.progressBar = new ProgressBar();
             this.pbStatus = new PictureBox();
-
-            // 
-            // pnlContainer
-            // 
-            this.pnlContainer.Dock = DockStyle.Top;
-            this.pnlContainer.AutoSize = true;
-            this.pnlContainer.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            this.pnlContainer.BackColor = Color.White; // 显式使用白色背景
-            this.pnlContainer.Padding = new Padding(10);
-            this.pnlContainer.Paint += PnlContainer_Paint;
 
             // 
             // layoutPanel
@@ -78,7 +66,10 @@ namespace test.src.UI.Controls
             this.layoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Row 0: Title
             this.layoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Row 1: Details
             this.layoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Row 2: Progress
-            this.layoutPanel.BackColor = Color.Transparent;
+            this.layoutPanel.BackColor = Color.White; // 直接使用白色背景
+            this.layoutPanel.Padding = new Padding(10);
+            // 添加边框以确保可见
+            this.layoutPanel.CellBorderStyle = TableLayoutPanelCellBorderStyle.None;
 
             // 
             // pbStatus
@@ -138,8 +129,16 @@ namespace test.src.UI.Controls
             this.layoutPanel.Controls.Add(this.progressBar, 0, 2);
             this.layoutPanel.SetColumnSpan(this.progressBar, 3); // Span all columns
 
-            this.pnlContainer.Controls.Add(this.layoutPanel);
-            this.Controls.Add(this.pnlContainer);
+            this.Controls.Add(this.layoutPanel);
+
+            // 显式绘制边框
+            this.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.LightGray))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 11); // 减去Padding
+                }
+            };
         }
 
         protected override void OnResize(EventArgs e)
@@ -153,28 +152,6 @@ namespace test.src.UI.Controls
                 if (availableWidth > 0)
                 {
                     lblDetails.MaximumSize = new Size(availableWidth, 0);
-                }
-            }
-        }
-
-        private void PnlContainer_Paint(object? sender, PaintEventArgs e)
-        {
-            var p = sender as Panel;
-            if (p == null) return;
-
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            var rect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
-            using (var path = UIStyleHelper.GetRoundedPath(rect, 15))
-            {
-                using (var brush = new SolidBrush(Color.White)) // 显式使用白色
-                {
-                    g.FillPath(brush, path);
-                }
-                using (var pen = new Pen(Color.FromArgb(200, 200, 200))) // 浅灰色边框
-                {
-                    g.DrawPath(pen, path);
                 }
             }
         }
