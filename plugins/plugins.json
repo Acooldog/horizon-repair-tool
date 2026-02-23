@@ -2,7 +2,7 @@
   // 应用信息
   "Application": {
     "Name": "地平线修复工具",
-    "Version": "v1.1.0"
+    "Version": "v1.2.0"
   },
   // 图标
   "icon": "img/ke.ico",
@@ -40,5 +40,59 @@
       "Xbox Live 网络服务",
       "Peer Networking Grouping"
     ]
+  },
+  // 地平线4诊断报告的配置
+  "FH4MedicalTeredo": {
+    // Teredo服务器地址
+    "teredo_servers": [
+      "win1910.ipv6.microsoft.com",
+      "teredo.remlab.net",
+      "teredo-debian.remlab.net",
+      "teredo.autotrans.consulintel.com",
+      "teredo.ipv6.microsoft.com",
+      "teredo.ngix.ne.kr",
+      "teredo.managemydedi.com",
+      "teredo.trex.fi",
+      "teredo.iks-jena.de"
+    ],
+    // 游戏服务器地址
+    "server_info_dict":
+    {
+      "日本1": "e87.b.akamaiedge.net",
+      "美西服1": "e87.dscb.akamaiedge.net",
+      "美西服2": "e87.dspg.akamaiedge.net",
+      "德国1": "teredo-debian.remlab.net",
+      "芬兰1": "teredo.trex.fi",
+      "德国2": "teredo.remlab.net",
+      "德国3": "teredo2.remlab.net",
+      "德国4": "teredo.iks-jena.de"
+    }
+  },
+  // 地平线5诊断报告的配置
+  "FH5MedicalTeredo": {
+    // Teredo服务器地址 (复用FH4配置)
+    "teredo_servers": [
+      "win1910.ipv6.microsoft.com",
+      "teredo.remlab.net",
+      "teredo-debian.remlab.net",
+      "teredo.autotrans.consulintel.com",
+      "teredo.ipv6.microsoft.com",
+      "teredo.ngix.ne.kr",
+      "teredo.managemydedi.com",
+      "teredo.trex.fi",
+      "teredo.iks-jena.de"
+    ],
+    // 游戏服务器地址 (复用FH4配置)
+    "server_info_dict":
+    {
+      "日本1": "e87.b.akamaiedge.net",
+      "美西服1": "e87.dscb.akamaiedge.net",
+      "美西服2": "e87.dspg.akamaiedge.net",
+      "德国1": "teredo-debian.remlab.net",
+      "芬兰1": "teredo.trex.fi",
+      "德国2": "teredo.remlab.net",
+      "德国3": "teredo2.remlab.net",
+      "德国4": "teredo.iks-jena.de"
+    }
   }
 }

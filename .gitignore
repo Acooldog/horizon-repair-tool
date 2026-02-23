@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 .vscode/
+_文档/
+.trae/

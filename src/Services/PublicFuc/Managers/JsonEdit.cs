@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Linq;
 using test.src.Services.PublicFuc.Helpers;
 
-namespace test.src.Services.FH4.Managers
+namespace test.src.Services.PublicFuc.Managers
 {
     public class JsonEdit
     {
